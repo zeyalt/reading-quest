@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #FFF8F0;
+  --orange: #FF6B35;
+  --yellow: #FFD93D;
+  --teal: #00C9A7;
+  --text: #2D2D2D;
+  --muted: #9A9A9A;
+  --card: #FFFFFF;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+}
+
+h1, h2, h3 {
+  font-family: 'Fredoka One', cursive;
+  font-weight: 400;
+}
+
+/* Progress bar animation */
+.progress-bar-fill {
+  transition: width 0.5s ease;
+}
+
+/* Confetti overlay */
+#confetti-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0e8e0 25%, #ffe8d6 50%, #f0e8e0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* Flame pulse */
+@keyframes flamePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.flame-pulse {
+  display: inline-block;
+  animation: flamePulse 1s ease-in-out infinite;
+}
+
+/* Success flash */
+@keyframes successFlash {
+  0% { background-color: transparent; }
+  30% { background-color: #d4edda; }
+  100% { background-color: transparent; }
+}
+
+.success-flash {
+  animation: successFlash 1s ease;
+}
+
+/* Tab fade */
+.tab-content {
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Offline banner */
+.offline-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: #FF6B35;
+  color: white;
+  text-align: center;
+  padding: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
