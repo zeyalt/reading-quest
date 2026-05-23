@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Pencil, Trash2, Plus, Check, X, Camera, ChevronDown, ChevronUp, BookOpen } from 'lucide-react'
+import { Pencil, Trash2, Plus, Check, X, Camera, ChevronDown, ChevronUp, BookOpen, Search } from 'lucide-react'
 import { Book, ReadingLog, CATEGORIES, CATEGORY_COLORS, LANGUAGES, Category, Language } from '@/lib/types'
 import { useUser } from '@/components/UserContext'
 import CategoryIcon from '@/components/CategoryIcon'
@@ -25,6 +25,21 @@ const emptyForm = (): BookForm => ({
   language: 'English',
 })
 
+type PagesBucket = 'Any' | 'Under 50' | '50–100' | '100–200' | '200–500' | '500+'
+
+const PAGES_BUCKETS: PagesBucket[] = ['Any', 'Under 50', '50–100', '100–200', '200–500', '500+']
+
+function matchesPagesBucket(pages: number, bucket: PagesBucket): boolean {
+  switch (bucket) {
+    case 'Any': return true
+    case 'Under 50': return pages < 50
+    case '50–100': return pages >= 50 && pages <= 100
+    case '100–200': return pages > 100 && pages <= 200
+    case '200–500': return pages > 200 && pages <= 500
+    case '500+': return pages > 500
+  }
+}
+
 export default function BooksPage() {
   const { user } = useUser()
   const [books, setBooks] = useState<Book[]>([])
@@ -37,6 +52,17 @@ export default function BooksPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [expandedCategory, setExpandedCategory] = useState<Category | null>(null)
+
+  // Filters
+  const [search, setSearch] = useState('')
+  const [genreFilter, setGenreFilter] = useState<Category | 'All'>('All')
+  const [pagesFilter, setPagesFilter] = useState<PagesBucket>('Any')
+  const filtersActive = search.trim() !== '' || genreFilter !== 'All' || pagesFilter !== 'Any'
+  function clearFilters() {
+    setSearch('')
+    setGenreFilter('All')
+    setPagesFilter('Any')
+  }
 
   async function load() {
     if (!user) return
@@ -119,8 +145,21 @@ export default function BooksPage() {
     setSaving(false)
   }
 
+  // Apply filters before grouping. AND-combined: search, genre, pages bucket.
+  const searchLower = search.trim().toLowerCase()
+  const filteredBooks = books.filter((b) => {
+    if (searchLower) {
+      const title = b.title.toLowerCase()
+      const author = (b.author ?? '').toLowerCase()
+      if (!title.includes(searchLower) && !author.includes(searchLower)) return false
+    }
+    if (genreFilter !== 'All' && b.category !== genreFilter) return false
+    if (!matchesPagesBucket(b.total_pages, pagesFilter)) return false
+    return true
+  })
+
   const grouped = CATEGORIES.reduce<Record<Category, Book[]>>(
-    (acc, cat) => { acc[cat] = books.filter((b) => b.category === cat); return acc },
+    (acc, cat) => { acc[cat] = filteredBooks.filter((b) => b.category === cat); return acc },
     {} as Record<Category, Book[]>,
   )
 
@@ -198,6 +237,70 @@ export default function BooksPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Filters — only shown when there are books to filter */}
+      {books.length > 0 && (
+        <div className="mb-4">
+          <div className="relative mb-2">
+            <Search size={16} color="#9A9A9A" className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search title or author…"
+              className="w-full rounded-xl border-2 pl-9 pr-9 py-2.5 font-semibold text-sm outline-none"
+              style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }}
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center"
+                style={{ background: '#F0E8E0' }}
+                aria-label="Clear search"
+              >
+                <X size={12} color="#9A9A9A" />
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2 items-center">
+            <select
+              value={genreFilter}
+              onChange={(e) => setGenreFilter(e.target.value as Category | 'All')}
+              className="flex-1 min-w-0 rounded-xl border-2 px-3 py-2 font-semibold text-sm outline-none"
+              style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }}
+              aria-label="Filter by genre"
+            >
+              <option value="All">All genres</option>
+              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select
+              value={pagesFilter}
+              onChange={(e) => setPagesFilter(e.target.value as PagesBucket)}
+              className="flex-1 min-w-0 rounded-xl border-2 px-3 py-2 font-semibold text-sm outline-none"
+              style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }}
+              aria-label="Filter by total pages"
+            >
+              {PAGES_BUCKETS.map((b) => (
+                <option key={b} value={b}>{b === 'Any' ? 'Any length' : `${b} pages`}</option>
+              ))}
+            </select>
+          </div>
+          {filtersActive && (
+            <div className="flex items-center justify-between mt-2 px-1">
+              <span className="text-xs font-bold" style={{ color: '#9A9A9A' }}>
+                {filteredBooks.length} of {books.length} {books.length === 1 ? 'book' : 'books'}
+              </span>
+              <button
+                onClick={clearFilters}
+                className="text-xs font-bold flex items-center gap-1"
+                style={{ color: '#FF6B35' }}
+              >
+                <X size={12} /> Clear filters
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -364,6 +467,21 @@ export default function BooksPage() {
           <BookOpen size={48} color="#F0E8E0" className="mx-auto mb-3" />
           <p className="font-bold">No books yet!</p>
           <p className="text-sm">Add a book or scan your shelf.</p>
+        </div>
+      )}
+
+      {books.length > 0 && filteredBooks.length === 0 && (
+        <div className="text-center py-12" style={{ color: '#9A9A9A' }}>
+          <Search size={40} color="#F0E8E0" className="mx-auto mb-3" />
+          <p className="font-bold">No matches</p>
+          <p className="text-sm mb-3">Try a different search or clear the filters.</p>
+          <button
+            onClick={clearFilters}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-sm text-white"
+            style={{ background: '#FF6B35' }}
+          >
+            <X size={14} /> Clear filters
+          </button>
         </div>
       )}
     </div>
