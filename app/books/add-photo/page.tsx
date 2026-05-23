@@ -3,9 +3,58 @@
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CATEGORIES, CATEGORY_COLORS, LANGUAGES, Category, Language } from '@/lib/types'
-import { getSupabaseClient } from '@/lib/supabase'
 import { Sparkles, BookOpen, Camera, Search, AlertCircle, ChevronLeft } from 'lucide-react'
 import CategoryIcon from '@/components/CategoryIcon'
+
+// Resize and re-encode an image client-side so we stay well under Vercel's
+// 4.5MB request body limit. 1568px is Anthropic's recommended max edge for vision.
+async function fileToResizedBase64(
+  file: File,
+  maxEdge = 1568,
+  quality = 0.85,
+): Promise<{ data: string; mediaType: string }> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      let { width, height } = img
+      const longest = Math.max(width, height)
+      if (longest > maxEdge) {
+        const scale = maxEdge / longest
+        width = Math.round(width * scale)
+        height = Math.round(height * scale)
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return reject(new Error('Canvas not supported on this device'))
+      ctx.drawImage(img, 0, 0, width, height)
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return reject(new Error('Failed to encode image'))
+          const reader = new FileReader()
+          reader.onload = () => {
+            const result = reader.result as string
+            // Strip the "data:image/jpeg;base64," prefix; Claude wants raw base64
+            const base64 = result.split(',')[1]
+            resolve({ data: base64, mediaType: 'image/jpeg' })
+          }
+          reader.onerror = () => reject(new Error('Failed to read image data'))
+          reader.readAsDataURL(blob)
+        },
+        'image/jpeg',
+        quality,
+      )
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Failed to load image'))
+    }
+    img.src = url
+  })
+}
 
 interface DetectedBook {
   title: string
@@ -46,23 +95,15 @@ export default function AddPhotoPage() {
     setStep('analyzing')
 
     try {
-      // Upload to Supabase storage
-      const fileName = `book-photo-${Date.now()}.jpg`
-      const sb = getSupabaseClient()
-      const { error: uploadError } = await sb.storage
-        .from('book-photos')
-        .upload(fileName, file, { contentType: file.type })
-
-      if (uploadError) throw new Error(uploadError.message)
-
-      const { data: urlData } = sb.storage.from('book-photos').getPublicUrl(fileName)
-      const imageUrl = urlData.publicUrl
+      // Resize + encode the photo on-device. We send it inline to the API
+      // (Claude Vision accepts base64), avoiding a storage round-trip entirely.
+      const { data: imageData, mediaType } = await fileToResizedBase64(file)
 
       // Identify books
       const identRes = await fetch('/api/identify-books', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_url: imageUrl }),
+        body: JSON.stringify({ image_data: imageData, media_type: mediaType }),
       })
 
       if (!identRes.ok) throw new Error('Failed to analyze photo')
@@ -94,9 +135,6 @@ export default function AddPhotoPage() {
       setDetected(detectedList)
       setStep('confirm')
       setLastAnalysis(now)
-
-      // Clean up storage after getting response
-      sb.storage.from('book-photos').remove([fileName])
 
       // Look up pages in parallel
       const updated = [...detectedList]

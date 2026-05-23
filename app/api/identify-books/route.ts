@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
-  const { image_url } = await req.json()
-  if (!image_url) {
-    return NextResponse.json({ error: 'image_url required' }, { status: 400 })
+  const { image_data, media_type } = await req.json()
+  if (!image_data || !media_type) {
+    return NextResponse.json(
+      { error: 'image_data and media_type required' },
+      { status: 400 },
+    )
   }
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -23,8 +26,9 @@ export async function POST(req: NextRequest) {
             {
               type: 'image',
               source: {
-                type: 'url',
-                url: image_url,
+                type: 'base64',
+                media_type,
+                data: image_data,
               },
             },
             {
