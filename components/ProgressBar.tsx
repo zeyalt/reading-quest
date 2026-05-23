@@ -1,0 +1,30 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+
+interface Props {
+  percent: number
+  color?: string
+  height?: number
+}
+
+export default function ProgressBar({ percent, color = '#FF6B35', height = 10 }: Props) {
+  const [width, setWidth] = useState(0)
+
+  useEffect(() => {
+    const t = setTimeout(() => setWidth(percent), 80)
+    return () => clearTimeout(t)
+  }, [percent])
+
+  return (
+    <div
+      className="w-full rounded-full overflow-hidden"
+      style={{ height, background: '#F0E8E0' }}
+    >
+      <div
+        className="h-full rounded-full progress-bar-fill"
+        style={{ width: `${width}%`, background: color }}
+      />
+    </div>
+  )
+}

@@ -5,14 +5,18 @@ import { todaySGT } from '@/lib/utils'
 export async function GET(req: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = req.nextUrl
+  const userId = searchParams.get('user_id')
   const bookId = searchParams.get('book_id')
   const from = searchParams.get('from')
   const to = searchParams.get('to')
   const limit = searchParams.get('limit')
 
+  if (!userId) return NextResponse.json({ error: 'user_id required' }, { status: 400 })
+
   let query = supabase
     .from('reading_log')
     .select('*')
+    .eq('user_id', userId)
     .order('date', { ascending: false })
     .order('logged_at', { ascending: false })
 
@@ -28,15 +32,17 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const supabase = createServiceClient()
-  const body = await req.json()
-  const { book_id, current_page, date } = body
+  const { user_id, book_id, current_page, date } = await req.json()
+
+  if (!user_id) return NextResponse.json({ error: 'user_id required' }, { status: 400 })
+
   const logDate = date ?? todaySGT()
 
   const { data, error } = await supabase
     .from('reading_log')
     .upsert(
-      { book_id, current_page, date: logDate },
-      { onConflict: 'book_id,date' },
+      { user_id, book_id, current_page, date: logDate },
+      { onConflict: 'user_id,book_id,date' },
     )
     .select()
     .single()

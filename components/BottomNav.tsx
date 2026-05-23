@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { Home, Calendar, BookOpen, BarChart2 } from 'lucide-react'
 
 const tabs = [
-  { href: '/', label: 'Home', emoji: '🏠' },
-  { href: '/schedule', label: 'Schedule', emoji: '📅' },
-  { href: '/books', label: 'Books', emoji: '📚' },
-  { href: '/progress', label: 'Progress', emoji: '📊' },
+  { href: '/', label: 'Home', Icon: Home },
+  { href: '/schedule', label: 'Schedule', Icon: Calendar },
+  { href: '/books', label: 'Books', Icon: BookOpen },
+  { href: '/progress', label: 'Progress', Icon: BarChart2 },
 ]
 
 export default function BottomNav() {
@@ -24,24 +25,17 @@ export default function BottomNav() {
       }}
     >
       <div className="flex h-full">
-        {tabs.map((tab) => {
-          const active = tab.href === '/'
-            ? pathname === '/'
-            : pathname.startsWith(tab.href)
+        {tabs.map(({ href, label, Icon }) => {
+          const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
           return (
             <Link
-              key={tab.href}
-              href={tab.href}
-              className="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px] transition-colors"
-              style={{ color: active ? '#FF6B35' : '#9A9A9A' }}
+              key={href}
+              href={href}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px]"
+              style={{ color: active ? '#FF6B35' : '#C0B8B0' }}
             >
-              <span className="text-xl leading-none">{tab.emoji}</span>
-              <span
-                className="text-[10px] leading-none font-bold"
-                style={{ color: active ? '#FF6B35' : '#9A9A9A' }}
-              >
-                {tab.label}
-              </span>
+              <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
+              <span className="text-[10px] font-bold leading-none">{label}</span>
             </Link>
           )
         })}

@@ -3,7 +3,12 @@
     "allow": [
       "Bash(cd \"/Users/zeyalt/MySpace/Personal/Data Science/Projects/reading-quest\" && mkdir -p app/schedule app/books/add-photo app/progress app/api/books app/api/schedule app/api/reading-log app/api/identify-books app/api/lookup-pages components lib public/icons)",
       "Bash(npm install *)",
-      "Bash(mkdir -p \"/Users/zeyalt/MySpace/Personal/Data Science/Projects/reading-quest/app/api/books/[id]\")"
+      "Bash(mkdir -p \"/Users/zeyalt/MySpace/Personal/Data Science/Projects/reading-quest/app/api/books/[id]\")",
+      "Bash(node -e ' *)",
+      "Bash(npx tsc *)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(node node_modules/typescript/bin/tsc --noEmit)",
+      "Bash(npm run *)"
     ],
     "additionalDirectories": [
       "/Users/zeyalt/MySpace/Personal/Data Science/Projects/reading-quest/app",
