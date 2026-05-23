@@ -1,100 +1,84 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Book, Schedule, ReadingLog, DAY_NAMES, CATEGORY_COLORS, CATEGORIES, Category } from '@/lib/types'
-import { todayDayOfWeek, progressPercent, getCurrentPage, isComplete } from '@/lib/utils'
+import Link from 'next/link'
+import { Book, ReadingLog, ScheduledReading, DAY_NAMES, CATEGORY_COLORS } from '@/lib/types'
+import { todaySGT, progressPercent, getCurrentPage } from '@/lib/utils'
 import { useUser } from '@/components/UserContext'
 import ProgressBar from '@/components/ProgressBar'
 import CategoryIcon from '@/components/CategoryIcon'
-import { Pencil, Sparkles, Calendar, Star } from 'lucide-react'
+import { Calendar, ClipboardList, Star, Sparkles } from 'lucide-react'
 
 export default function SchedulePage() {
   const { user } = useUser()
   const [books, setBooks] = useState<Book[]>([])
-  const [schedule, setSchedule] = useState<Schedule[]>([])
+  const [schedule, setSchedule] = useState<ScheduledReading[]>([])
   const [logs, setLogs] = useState<ReadingLog[]>([])
   const [loading, setLoading] = useState(true)
-  const [editDay, setEditDay] = useState<number | null>(null)
-  const [saving, setSaving] = useState<number | null>(null)
-  const todayDow = todayDayOfWeek()
+  const today = todaySGT()
 
-  async function load() {
+  useEffect(() => {
     if (!user) return
-    const [bRes, sRes, lRes] = await Promise.all([
-      fetch('/api/books'),
-      fetch(`/api/schedule?user_id=${user.id}`),
-      fetch(`/api/reading-log?user_id=${user.id}&limit=500`),
-    ])
-    setBooks(await bRes.json())
-    setSchedule(await sRes.json())
-    setLogs(await lRes.json())
-    setLoading(false)
-  }
-
-  useEffect(() => { load() }, [user])
-
-  async function updateSchedule(dow: number, bookId: string | null, targetPages?: number) {
-    if (!user) return
-    setSaving(dow)
-    const current = schedule.find((s) => s.day_of_week === dow)
-    const res = await fetch('/api/schedule', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: user.id,
-        day_of_week: dow,
-        book_id: bookId,
-        target_pages: targetPages ?? current?.target_pages ?? 15,
-      }),
-    })
-    if (res.ok) {
-      const updated = await res.json()
-      setSchedule((prev) => prev.map((s) => (s.day_of_week === dow ? updated : s)))
-      setEditDay(null)
+    async function load() {
+      const [bRes, sRes, lRes] = await Promise.all([
+        fetch('/api/books'),
+        fetch(`/api/scheduled-reading?user_id=${user!.id}&from=${today}`),
+        fetch(`/api/reading-log?user_id=${user!.id}&limit=500`),
+      ])
+      setBooks(await bRes.json())
+      setSchedule(await sRes.json())
+      setLogs(await lRes.json())
+      setLoading(false)
     }
-    setSaving(null)
-  }
-
-  async function autoFill() {
-    if (!user) return
-    const unfinished = books.filter((b) => !isComplete(b, logs))
-    const categoryOrder: Category[] = ['Mystery', 'Fiction', 'Comic', 'Singapore', 'Science', 'Chinese', 'Other']
-    const byCategory: Record<string, Book[]> = {}
-    for (const cat of categoryOrder) byCategory[cat] = unfinished.filter((b) => b.category === cat)
-    const catQueue = categoryOrder.filter((c) => byCategory[c].length > 0)
-    const catIndexes: Record<string, number> = {}
-    for (const c of catQueue) catIndexes[c] = 0
-
-    let catCursor = 0
-    for (let dow = 0; dow < 7; dow++) {
-      let bookId: string | null = null
-      if (catQueue.length > 0) {
-        const cat = catQueue[catCursor % catQueue.length]
-        const idx = catIndexes[cat] % byCategory[cat].length
-        bookId = byCategory[cat][idx].id
-        catIndexes[cat]++
-        catCursor++
-      }
-      await fetch('/api/schedule', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id, day_of_week: dow, book_id: bookId, target_pages: 15 }),
-      })
-    }
-    await load()
-  }
+    load()
+  }, [user, today])
 
   if (!user || loading) {
     return (
-      <div className="p-4">
+      <div className="p-4 pt-12">
         <div className="skeleton h-8 w-48 mb-4" />
-        {[1, 2, 3, 4, 5, 6, 7].map((i) => <div key={i} className="skeleton h-20 w-full mb-3 rounded-2xl" />)}
+        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <div key={i} className="skeleton h-20 w-full mb-3 rounded-2xl" />
+        ))}
       </div>
     )
   }
 
+  const accent = user.avatar_color
+
+  // ----- Group schedule rows by ISO week so we can render section headers ----
+  // Note: we use the simple Mon-based week of the date string.
+  function weekStartOf(dateStr: string): string {
+    const d = new Date(dateStr + 'T00:00:00Z')
+    const jsDay = d.getUTCDay() // 0=Sun..6=Sat
+    const appDow = jsDay === 0 ? 6 : jsDay - 1 // 0=Mon..6=Sun
+    d.setUTCDate(d.getUTCDate() - appDow)
+    return d.toISOString().split('T')[0]
+  }
+
+  const groups: { weekStart: string; rows: ScheduledReading[] }[] = []
+  for (const row of schedule) {
+    const wk = weekStartOf(row.date)
+    const bucket = groups.find((g) => g.weekStart === wk)
+    if (bucket) bucket.rows.push(row)
+    else groups.push({ weekStart: wk, rows: [row] })
+  }
+
+  function dayLabelOf(dateStr: string): string {
+    const d = new Date(dateStr + 'T00:00:00Z')
+    const jsDay = d.getUTCDay()
+    const appDow = jsDay === 0 ? 6 : jsDay - 1
+    return DAY_NAMES[appDow]
+  }
+
+  function shortDateOf(dateStr: string): string {
+    const d = new Date(dateStr + 'T00:00:00Z')
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+  }
+
   return (
     <div className="p-4 pt-12 tab-content">
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Calendar size={28} style={{ color: '#FF6B35' }} />
@@ -102,118 +86,118 @@ export default function SchedulePage() {
             {user.name}&apos;s Schedule
           </h1>
         </div>
-        <button
-          onClick={autoFill}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold text-white"
-          style={{ background: '#00C9A7' }}
+        <Link
+          href="/schedule/plan"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold"
+          style={{ background: '#FFF0E8', color: '#FF6B35' }}
         >
-          <Sparkles size={14} /> Auto-fill
-        </button>
+          <ClipboardList size={14} /> Plan
+        </Link>
       </div>
 
-      {schedule.map((slot) => {
-        const book = books.find((b) => b.id === slot.book_id)
-        const isToday = slot.day_of_week === todayDow
-        const currentPage = book ? getCurrentPage(book.id, logs) : 0
-        const percent = book ? progressPercent(currentPage, book.total_pages) : 0
-        const color = book ? (CATEGORY_COLORS[book.category] ?? '#FF6B35') : '#9A9A9A'
-        const isEditing = editDay === slot.day_of_week
-
-        return (
-          <div
-            key={slot.day_of_week}
-            className="rounded-2xl p-4 mb-3"
-            style={{
-              background: '#FFFFFF',
-              boxShadow: isToday ? `0 2px 16px ${user.avatar_color}40` : '0 2px 16px rgba(0,0,0,0.06)',
-              border: isToday ? `2px solid ${user.avatar_color}` : '2px solid transparent',
-            }}
+      {/* Empty state — no schedule generated yet */}
+      {schedule.length === 0 && (
+        <div className="text-center py-12">
+          <Sparkles size={48} color="#F0E8E0" className="mx-auto mb-3" />
+          <p className="font-bold mb-1">No schedule yet</p>
+          <p className="text-sm mb-4" style={{ color: '#9A9A9A' }}>
+            Set up a reading plan and generate {user.name}&apos;s schedule for the next few weeks.
+          </p>
+          <Link
+            href="/schedule/plan"
+            className="inline-flex items-center gap-1.5 px-5 py-3 rounded-xl font-bold text-white"
+            style={{ background: '#FF6B35', boxShadow: '0 2px 12px #FF6B3560' }}
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                  style={{
-                    background: isToday ? user.avatar_color : '#F0E8E0',
-                    color: isToday ? '#FFFFFF' : '#9A9A9A',
-                  }}
-                >
-                  {DAY_NAMES[slot.day_of_week]}
-                </span>
-                {isToday && (
-                  <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: user.avatar_color + '20', color: user.avatar_color }}>
-                    Today
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={() => setEditDay(isEditing ? null : slot.day_of_week)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg"
-                style={{ background: isEditing ? user.avatar_color + '20' : '#F0E8E0' }}
-                aria-label="Edit day"
-              >
-                <Pencil size={14} color={isEditing ? user.avatar_color : '#9A9A9A'} />
-              </button>
-            </div>
+            <ClipboardList size={16} /> Set up Reading Plan
+          </Link>
+        </div>
+      )}
 
-            {book ? (
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <CategoryIcon category={book.category} size={13} containerSize={24} />
-                  <span className="font-bold text-sm">{book.title}</span>
-                  <span className="text-xs px-1.5 py-0.5 rounded font-bold" style={{ background: '#F0E8E0', color: '#9A9A9A' }}>
-                    {book.language}
-                  </span>
-                </div>
-                <ProgressBar percent={percent} color={color} height={6} />
-                <div className="text-xs mt-1" style={{ color: '#9A9A9A' }}>
-                  p.{currentPage}/{book.total_pages} · target {slot.target_pages} pages/day
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5">
-                <Star size={14} style={{ color: '#FFD93D' }} />
-                <p className="text-sm font-bold" style={{ color: '#9A9A9A' }}>Rest day</p>
-              </div>
-            )}
-
-            {isEditing && (
-              <div className="mt-3 pt-3 flex flex-col gap-2" style={{ borderTop: '1px solid #F0E8E0' }}>
-                <select
-                  defaultValue={slot.book_id ?? ''}
-                  onChange={(e) => updateSchedule(slot.day_of_week, e.target.value || null)}
-                  className="rounded-xl border-2 px-3 py-2 font-semibold outline-none"
-                  style={{ borderColor: '#F0E8E0', background: '#FFF8F0' }}
-                  disabled={saving === slot.day_of_week}
-                >
-                  <option value="">☆ Rest day</option>
-                  {books.filter((b) => !isComplete(b, logs)).map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.title}
-                    </option>
-                  ))}
-                </select>
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-bold" style={{ color: '#9A9A9A' }}>Pages/day:</label>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    defaultValue={slot.target_pages}
-                    min={1}
-                    max={100}
-                    className="w-20 rounded-xl border-2 px-3 py-2 font-bold text-center outline-none"
-                    style={{ borderColor: '#F0E8E0', background: '#FFF8F0' }}
-                    onBlur={(e) => updateSchedule(slot.day_of_week, slot.book_id, parseInt(e.target.value) || 15)}
-                  />
-                </div>
-                {saving === slot.day_of_week && (
-                  <p className="text-xs font-bold" style={{ color: '#FF6B35' }}>Saving...</p>
-                )}
-              </div>
-            )}
+      {/* Per-week sections */}
+      {groups.map((grp, gi) => (
+        <div key={grp.weekStart} className="mb-4">
+          <div className="flex items-center justify-between px-1 mb-1.5">
+            <span className="text-xs font-bold" style={{ color: '#9A9A9A' }}>
+              Week of {shortDateOf(grp.weekStart)}
+            </span>
+            <span className="text-xs font-bold" style={{ color: '#9A9A9A' }}>
+              {gi === 0 ? 'This week' : `+${gi} week${gi === 1 ? '' : 's'}`}
+            </span>
           </div>
-        )
-      })}
+          <div className="rounded-2xl overflow-hidden" style={{ background: '#FFFFFF', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
+            {grp.rows.map((row, idx) => {
+              const isToday = row.date === today
+              const book = row.book_id ? books.find((b) => b.id === row.book_id) : null
+              const color = book ? (CATEGORY_COLORS[book.category] ?? '#FF6B35') : '#9A9A9A'
+              const currentPage = book ? getCurrentPage(book.id, logs) : 0
+              const percent = book ? progressPercent(currentPage, book.total_pages) : 0
+
+              return (
+                <div key={row.id}>
+                  {idx > 0 && <div style={{ height: 1, background: '#F5EFE8', margin: '0 12px' }} />}
+                  <div
+                    className="px-3 py-3"
+                    style={{
+                      background: isToday ? `${accent}10` : 'transparent',
+                    }}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      {/* Day badge */}
+                      <div className="flex flex-col items-center gap-0.5 flex-shrink-0 w-12">
+                        <span
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold"
+                          style={{
+                            background: isToday ? accent : '#F0E8E0',
+                            color: isToday ? '#FFFFFF' : '#9A9A9A',
+                          }}
+                        >
+                          {dayLabelOf(row.date)}
+                        </span>
+                        <span className="text-[10px] font-bold" style={{ color: isToday ? accent : '#9A9A9A' }}>
+                          {shortDateOf(row.date)}
+                        </span>
+                      </div>
+
+                      {/* Book info */}
+                      <div className="flex-1 min-w-0 pt-1">
+                        {book ? (
+                          <>
+                            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                              <CategoryIcon category={book.category} size={12} containerSize={22} />
+                              <span className="text-sm font-bold truncate">{book.title}</span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: '#F0E8E0', color: '#9A9A9A' }}>
+                                {book.language}
+                              </span>
+                            </div>
+                            <ProgressBar percent={percent} color={color} height={5} />
+                            <div className="text-[11px] mt-0.5" style={{ color: '#9A9A9A' }}>
+                              p.{currentPage}/{book.total_pages} · target {row.target_pages} pages
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex items-center gap-1.5 py-2">
+                            <Star size={14} style={{ color: '#FFD93D' }} />
+                            <p className="text-sm font-bold" style={{ color: '#9A9A9A' }}>Rest day</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {isToday && (
+                        <span
+                          className="text-[10px] px-2 py-0.5 rounded-full font-bold flex-shrink-0"
+                          style={{ background: accent, color: '#FFFFFF' }}
+                        >
+                          Today
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

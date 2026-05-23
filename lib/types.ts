@@ -36,6 +36,23 @@ export interface ReadingLog {
   logged_at: string
 }
 
+export interface ReadingPlan {
+  user_id: string
+  day_of_week: number // 0=Mon ... 6=Sun
+  language: Language | null
+  target_pages: number
+  updated_at: string
+}
+
+export interface ScheduledReading {
+  id: string
+  user_id: string
+  date: string // YYYY-MM-DD
+  book_id: string | null
+  target_pages: number
+  created_at: string
+}
+
 export type Category =
   | 'Mystery'
   | 'Fiction'

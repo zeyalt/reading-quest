@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Book, ReadingLog, Schedule, CATEGORY_COLORS } from '@/lib/types'
+import { Book, ReadingLog, ScheduledReading, CATEGORY_COLORS } from '@/lib/types'
 import {
   todaySGT,
   todayDayOfWeek,
@@ -24,7 +24,8 @@ export default function Dashboard() {
   const { user } = useUser()
   const [books, setBooks] = useState<Book[]>([])
   const [logs, setLogs] = useState<ReadingLog[]>([])
-  const [schedule, setSchedule] = useState<Schedule[]>([])
+  // Today's slot from the generated multi-week schedule (scheduled_reading).
+  const [todaySlot, setTodaySlot] = useState<ScheduledReading | null>(null)
   const [loading, setLoading] = useState(true)
   const [celebrated, setCelebrated] = useState(false)
 
@@ -36,19 +37,19 @@ export default function Dashboard() {
     const [bRes, lRes, sRes] = await Promise.all([
       fetch('/api/books'),
       fetch(`/api/reading-log?user_id=${user.id}&limit=500`),
-      fetch(`/api/schedule?user_id=${user.id}`),
+      fetch(`/api/scheduled-reading?user_id=${user.id}&from=${today}&to=${today}`),
     ])
     setBooks(await bRes.json())
     setLogs(await lRes.json())
-    setSchedule(await sRes.json())
+    const sched: ScheduledReading[] = await sRes.json()
+    setTodaySlot(sched[0] ?? null)
     setLoading(false)
-  }, [user])
+  }, [user, today])
 
   useEffect(() => { load() }, [load])
 
-  const todaySchedule = schedule.find((s) => s.day_of_week === todayDow)
-  const todayBook = books.find((b) => b.id === todaySchedule?.book_id)
-  const targetPages = todaySchedule?.target_pages ?? 15
+  const todayBook = todaySlot?.book_id ? books.find((b) => b.id === todaySlot.book_id) : undefined
+  const targetPages = todaySlot?.target_pages ?? 15
   const currentPage = todayBook ? getCurrentPage(todayBook.id, logs) : 0
   const todayPages = todayBook ? getPagesReadOnDate(todayBook.id, today, logs) : 0
   const percent = todayBook ? progressPercent(currentPage, todayBook.total_pages) : 0
