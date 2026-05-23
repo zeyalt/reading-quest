@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Claude Vision can take 10–20s for shelf photos. Vercel Hobby default is 10s,
+// max is 60s. Setting explicitly so the function isn't killed mid-request.
+export const maxDuration = 60
+
 export async function POST(req: NextRequest) {
   const { image_data, media_type } = await req.json()
   if (!image_data || !media_type) {
@@ -17,7 +21,7 @@ export async function POST(req: NextRequest) {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       messages: [
         {
@@ -52,7 +56,11 @@ If you cannot identify a book clearly, skip it. Do not guess wildly.`,
 
   if (!response.ok) {
     const err = await response.text()
-    return NextResponse.json({ error: err }, { status: 500 })
+    console.error('Anthropic API error:', response.status, err)
+    return NextResponse.json(
+      { error: `Claude API error (${response.status}): ${err.slice(0, 300)}` },
+      { status: 500 },
+    )
   }
 
   const result = await response.json()
@@ -65,8 +73,9 @@ If you cannot identify a book clearly, skip it. Do not guess wildly.`,
       books = JSON.parse(jsonMatch[0])
     }
   } catch {
+    console.error('Could not parse AI response:', text)
     return NextResponse.json(
-      { error: 'Could not parse AI response', raw: text },
+      { error: 'Could not parse AI response', raw: text.slice(0, 300) },
       { status: 500 },
     )
   }

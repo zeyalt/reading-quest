@@ -106,7 +106,13 @@ export default function AddPhotoPage() {
         body: JSON.stringify({ image_data: imageData, media_type: mediaType }),
       })
 
-      if (!identRes.ok) throw new Error('Failed to analyze photo')
+      if (!identRes.ok) {
+        // Surface the real server error so we can actually diagnose problems
+        // instead of hiding behind a generic "Failed to analyze photo".
+        const errBody = await identRes.json().catch(() => null)
+        const detail = errBody?.error ?? `HTTP ${identRes.status}`
+        throw new Error(`Failed to analyze photo: ${detail}`)
+      }
       const { books: identified } = await identRes.json()
 
       if (!identified || identified.length === 0) {
