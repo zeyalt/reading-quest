@@ -7,6 +7,8 @@ import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 import { UserProvider } from '@/components/UserContext'
 import UserGuard from '@/components/UserGuard'
 import UserSwitcher from '@/components/UserSwitcher'
+import { ThemeProvider } from '@/components/ThemeContext'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const nunito = Nunito({
   subsets: ['latin'],
@@ -44,17 +46,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className="min-h-screen" style={{ fontFamily: 'var(--font-nunito), sans-serif' }}>
-        <UserProvider>
-          <OfflineBanner />
-          <UserSwitcher />
-          <UserGuard>
-            <main className="max-w-[480px] mx-auto pb-20 min-h-screen">
-              {children}
-            </main>
-            <BottomNav />
-          </UserGuard>
-          <ServiceWorkerRegistration />
-        </UserProvider>
+        <ThemeProvider>
+          <UserProvider>
+            <OfflineBanner />
+            <UserSwitcher />
+            <ThemeToggle />
+            <UserGuard>
+              <main className="max-w-[480px] mx-auto pb-20 min-h-screen">
+                {children}
+              </main>
+              <BottomNav />
+            </UserGuard>
+            <ServiceWorkerRegistration />
+          </UserProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

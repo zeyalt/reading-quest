@@ -8,6 +8,29 @@
   --text: #2D2D2D;
   --muted: #9A9A9A;
   --card: #FFFFFF;
+
+  --color-bg: #FFF8F0;
+  --color-card: #FFFFFF;
+  --color-surface: #F0E8E0;
+  --color-muted: #9A9A9A;
+  --color-text: #2D2D2D;
+  --color-subtle: #C0B8B0;
+  --color-shadow: 0 2px 16px rgba(0,0,0,0.06);
+}
+
+html[data-theme="dark"] {
+  --bg: #121212;
+  --card: #1E1E1E;
+  --text: #EAEAEA;
+  --muted: #8A8A8A;
+
+  --color-bg: #121212;
+  --color-card: #1E1E1E;
+  --color-surface: #2A2A2A;
+  --color-muted: #8A8A8A;
+  --color-text: #EAEAEA;
+  --color-subtle: #505050;
+  --color-shadow: 0 2px 16px rgba(0,0,0,0.3);
 }
 
 * {
@@ -19,8 +42,8 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: var(--bg);
-  color: var(--text);
+  background-color: var(--color-bg);
+  color: var(--color-text);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -93,6 +116,17 @@ h1, h2, h3 {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Hide the horizontal scrollbar on the milestones strip while keeping
+   the scroll behaviour. Without this, mobile browsers can show a 1-2px
+   scrollbar at the bottom of the card that looks like a visual artefact. */
+.milestones-scroll {
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* Edge legacy */
+}
+.milestones-scroll::-webkit-scrollbar {
+  display: none;                  /* Chromium / Safari */
 }
 
 /* Offline banner */

@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/components/UserContext'
 import { DAY_NAMES, LANGUAGES, Language, ReadingPlan } from '@/lib/types'
-import { ChevronLeft, ClipboardList, Sparkles } from 'lucide-react'
+import { ChevronLeft, ClipboardList } from 'lucide-react'
 
 type DraftRow = {
   day_of_week: number
-  language: Language | ''       // '' = Any
+  language: Language | ''       // '' = Any / Rest
   target_pages: number
   saving?: boolean
 }
@@ -19,6 +19,9 @@ const emptyDraft = (dow: number): DraftRow => ({
   target_pages: 15,
 })
 
+// Goal-based plan editor: for each day of week, pick a target language and
+// a daily page target. There's no "generate" step anymore — the schedule
+// view simply derives the goal for each calendar date from this template.
 export default function ReadingPlanPage() {
   const router = useRouter()
   const { user } = useUser()
@@ -26,12 +29,8 @@ export default function ReadingPlanPage() {
     Array.from({ length: 7 }, (_, i) => emptyDraft(i)),
   )
   const [loading, setLoading] = useState(true)
-  const [weeks, setWeeks] = useState<1 | 2 | 3 | 4>(2)
-  const [generating, setGenerating] = useState(false)
-  const [confirmCount, setConfirmCount] = useState<number | null>(null)
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
 
-  // Hydrate from API on load
   useEffect(() => {
     if (!user) return
     async function load() {
@@ -70,37 +69,10 @@ export default function ReadingPlanPage() {
     if (!res.ok) {
       const err = await res.json().catch(() => null)
       setMessage({ kind: 'error', text: `Couldn't save ${DAY_NAMES[dow]}: ${err?.error ?? 'unknown'}` })
+    } else {
+      setMessage({ kind: 'ok', text: 'Saved.' })
+      setTimeout(() => setMessage(null), 1500)
     }
-  }
-
-  async function generate(overwrite = false) {
-    if (!user) return
-    setGenerating(true)
-    setMessage(null)
-    const res = await fetch('/api/reading-plan/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: user.id, weeks, overwrite }),
-    })
-    setGenerating(false)
-    if (res.status === 409) {
-      const body = await res.json()
-      setConfirmCount(body.existing_count)
-      return
-    }
-    if (!res.ok) {
-      const err = await res.json().catch(() => null)
-      setMessage({ kind: 'error', text: `Couldn't generate: ${err?.error ?? 'unknown'}` })
-      return
-    }
-    const body = await res.json()
-    setMessage({
-      kind: 'ok',
-      text: `Generated ${body.inserted} days${body.overwritten > 0 ? ` (replaced ${body.overwritten})` : ''}.`,
-    })
-    setConfirmCount(null)
-    // Bounce to the schedule view so the user sees the result
-    setTimeout(() => router.push('/schedule'), 800)
   }
 
   if (!user || loading) {
@@ -114,8 +86,6 @@ export default function ReadingPlanPage() {
     )
   }
 
-  const accent = user.avatar_color
-
   return (
     <div className="p-4 pt-12 tab-content">
       {/* Header */}
@@ -123,7 +93,7 @@ export default function ReadingPlanPage() {
         <button
           onClick={() => router.back()}
           className="p-2 rounded-xl"
-          style={{ background: '#F0E8E0' }}
+          style={{ background: 'var(--color-surface)' }}
           aria-label="Back"
         >
           <ChevronLeft size={18} color="#9A9A9A" />
@@ -134,20 +104,20 @@ export default function ReadingPlanPage() {
         </h1>
       </div>
 
-      <p className="text-sm mb-4" style={{ color: '#9A9A9A' }}>
-        Pick a language for each day. We&apos;ll keep {user.name} on one matching book at a time
-        until it&apos;s finished.
+      <p className="text-sm mb-4" style={{ color: 'var(--color-muted)' }}>
+        Pick a language and page target for each day. {user.name} picks the book at log time —
+        these are just the daily goals.
       </p>
 
-      {/* 7-row plan editor */}
-      <div className="rounded-2xl mb-4 overflow-hidden" style={{ background: '#FFFFFF', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
+      {/* 7-row editor */}
+      <div className="rounded-2xl mb-4 overflow-hidden" style={{ background: 'var(--color-card)', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
         {rows.map((row, idx) => (
           <div key={row.day_of_week}>
-            {idx > 0 && <div style={{ height: 1, background: '#F5EFE8', margin: '0 12px' }} />}
+            {idx > 0 && <div style={{ height: 1, background: 'var(--color-surface)', margin: '0 12px' }} />}
             <div className="px-3 py-2.5 flex items-center gap-2">
               <span
                 className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                style={{ background: '#F0E8E0', color: '#9A9A9A' }}
+                style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}
               >
                 {DAY_NAMES[row.day_of_week]}
               </span>
@@ -155,10 +125,10 @@ export default function ReadingPlanPage() {
                 value={row.language}
                 onChange={(e) => saveRow(row.day_of_week, { language: e.target.value as Language | '' })}
                 className="flex-1 min-w-0 rounded-xl border-2 px-3 py-2 font-semibold text-sm outline-none"
-                style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }}
+                style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}
                 aria-label={`Language for ${DAY_NAMES[row.day_of_week]}`}
               >
-                <option value="">Any / Rest day</option>
+                <option value="">Rest day</option>
                 {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
               </select>
               <input
@@ -175,11 +145,12 @@ export default function ReadingPlanPage() {
                   const n = Math.max(1, Math.min(200, parseInt(e.target.value) || 15))
                   saveRow(row.day_of_week, { target_pages: n })
                 }}
-                className="w-16 rounded-xl border-2 px-2 py-2 font-bold text-sm text-center outline-none"
-                style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }}
+                disabled={!row.language}
+                className="w-16 rounded-xl border-2 px-2 py-2 font-bold text-sm text-center outline-none disabled:opacity-40"
+                style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}
                 aria-label={`Target pages for ${DAY_NAMES[row.day_of_week]}`}
               />
-              <span className="text-[10px] font-bold w-6" style={{ color: '#9A9A9A' }}>
+              <span className="text-[10px] font-bold w-6" style={{ color: 'var(--color-muted)' }}>
                 pg{row.saving ? '…' : ''}
               </span>
             </div>
@@ -187,64 +158,6 @@ export default function ReadingPlanPage() {
         ))}
       </div>
 
-      {/* Duration picker + Generate */}
-      <div className="rounded-2xl p-4 mb-4" style={{ background: '#FFFFFF', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
-        <p className="text-xs font-bold mb-2" style={{ color: '#9A9A9A' }}>Generate for…</p>
-        <div className="flex gap-2 mb-4">
-          {([1, 2, 3, 4] as const).map((w) => (
-            <button
-              key={w}
-              onClick={() => setWeeks(w)}
-              className="flex-1 py-2 rounded-xl font-bold text-sm"
-              style={{
-                background: weeks === w ? accent : '#F0E8E0',
-                color: weeks === w ? '#FFFFFF' : '#9A9A9A',
-                border: weeks === w ? `2px solid ${accent}` : '2px solid transparent',
-              }}
-            >
-              {w} wk
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={() => generate(false)}
-          disabled={generating}
-          className="w-full flex items-center justify-center gap-1.5 py-3 rounded-xl font-bold text-white"
-          style={{ background: '#FF6B35', boxShadow: '0 2px 12px #FF6B3560' }}
-        >
-          <Sparkles size={16} /> {generating ? 'Generating…' : `Generate ${weeks * 7}-day schedule`}
-        </button>
-      </div>
-
-      {/* Confirm-overwrite dialog */}
-      {confirmCount !== null && (
-        <div className="rounded-2xl p-4 mb-4" style={{ background: '#FFF8F0', border: '2px solid #FFD93D' }}>
-          <p className="font-bold mb-2">Replace existing schedule?</p>
-          <p className="text-sm mb-3" style={{ color: '#9A9A9A' }}>
-            You already have <strong>{confirmCount}</strong> day{confirmCount === 1 ? '' : 's'} planned in this
-            window. Generating will overwrite them.
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setConfirmCount(null)}
-              className="flex-1 py-2 rounded-xl font-bold text-sm"
-              style={{ background: '#F0E8E0', color: '#9A9A9A' }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => generate(true)}
-              disabled={generating}
-              className="flex-1 py-2 rounded-xl font-bold text-sm text-white"
-              style={{ background: '#FF6B35' }}
-            >
-              {generating ? 'Replacing…' : 'Replace'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Inline status message */}
       {message && (
         <div
           className="rounded-xl p-3 text-sm font-bold"

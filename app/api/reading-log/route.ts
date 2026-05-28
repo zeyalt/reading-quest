@@ -50,3 +50,24 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data, { status: 201 })
 }
+
+// Delete a single (user, book, date) log entry. Used when correcting
+// retroactive entries from the schedule diary.
+export async function DELETE(req: NextRequest) {
+  const supabase = createServiceClient()
+  const { user_id, book_id, date } = await req.json()
+  if (!user_id || !book_id || !date) {
+    return NextResponse.json(
+      { error: 'user_id, book_id and date required' },
+      { status: 400 },
+    )
+  }
+  const { error } = await supabase
+    .from('reading_log')
+    .delete()
+    .eq('user_id', user_id)
+    .eq('book_id', book_id)
+    .eq('date', date)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
+}

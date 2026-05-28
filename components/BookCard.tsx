@@ -25,7 +25,7 @@ export default function BookCard({ book, logs, userId, onUpdate, onDelete, compa
   const complete = currentPage >= book.total_pages
 
   return (
-    <div className="rounded-2xl p-4 mb-3" style={{ background: '#FFFFFF', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
+    <div className="rounded-2xl p-4 mb-3" style={{ background: 'var(--color-card)', boxShadow: 'var(--color-shadow)' }}>
       <div className="flex items-start gap-3 cursor-pointer" onClick={() => !compact && setExpanded((e) => !e)}>
         <CategoryIcon category={book.category} size={18} containerSize={40} />
         <div className="flex-1 min-w-0">
@@ -37,16 +37,16 @@ export default function BookCard({ book, logs, userId, onUpdate, onDelete, compa
               </span>
             )}
           </div>
-          <div className="text-xs mt-0.5" style={{ color: '#9A9A9A' }}>{book.author}</div>
+          <div className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>{book.author}</div>
           <div className="flex gap-1 mt-1 flex-wrap">
-            <span className="text-xs px-1.5 py-0.5 rounded font-bold" style={{ background: '#F0E8E0', color: '#9A9A9A' }}>
+            <span className="text-xs px-1.5 py-0.5 rounded font-bold" style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}>
               {book.language}
             </span>
           </div>
           <div className="mt-2">
             <ProgressBar percent={percent} color={color} height={8} />
             <div className="flex justify-between mt-1">
-              <span className="text-xs" style={{ color: '#9A9A9A' }}>p.{currentPage}/{book.total_pages}</span>
+              <span className="text-xs" style={{ color: 'var(--color-muted)' }}>p.{currentPage}/{book.total_pages}</span>
               <span className="text-xs font-bold" style={{ color }}>{percent}%</span>
             </div>
           </div>
@@ -55,7 +55,7 @@ export default function BookCard({ book, logs, userId, onUpdate, onDelete, compa
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(book.id) }}
             className="p-1 rounded-lg hover:bg-red-50"
-            style={{ color: '#9A9A9A' }}
+            style={{ color: 'var(--color-muted)' }}
             aria-label="Remove book"
           >
             <Trash2 size={16} />

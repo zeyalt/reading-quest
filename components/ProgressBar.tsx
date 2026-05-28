@@ -19,7 +19,7 @@ export default function ProgressBar({ percent, color = '#FF6B35', height = 10 }:
   return (
     <div
       className="w-full rounded-full overflow-hidden"
-      style={{ height, background: '#F0E8E0' }}
+      style={{ height, background: 'var(--color-surface)' }}
     >
       <div
         className="h-full rounded-full progress-bar-fill"

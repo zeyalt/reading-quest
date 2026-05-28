@@ -178,12 +178,12 @@ export default function BooksPage() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl" style={{ fontFamily: 'var(--font-fredoka), cursive' }}>Book Library</h1>
-          <p className="text-xs font-bold" style={{ color: '#9A9A9A' }}>{books.length} books · shared collection</p>
+          <p className="text-xs font-bold" style={{ color: 'var(--color-muted)' }}>{books.length} books · shared collection</p>
         </div>
         <div className="flex gap-2">
           <Link href="/books/add-photo"
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold"
-            style={{ background: '#FFF0E8', color: '#FF6B35' }}>
+            style={{ background: 'var(--color-bg)', color: '#FF6B35' }}>
             <Camera size={15} /> Scan
           </Link>
           <button onClick={() => { setShowAdd((s) => !s); setError('') }}
@@ -196,30 +196,30 @@ export default function BooksPage() {
 
       {/* Add form */}
       {showAdd && (
-        <div className="rounded-2xl p-4 mb-4" style={{ background: '#FFF8F0', border: '2px solid #FFD93D' }}>
+        <div className="rounded-2xl p-4 mb-4" style={{ background: 'var(--color-bg)', border: '2px solid #FFD93D' }}>
           <h2 className="font-bold mb-3" style={{ fontFamily: 'var(--font-fredoka), cursive' }}>Add a Book</h2>
           <div className="flex flex-col gap-2">
             <input type="text" placeholder="Title *" value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
               className="rounded-xl border-2 px-3 py-2.5 font-semibold text-sm outline-none"
-              style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }} />
+              style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }} />
             <input type="text" placeholder="Author" value={form.author}
               onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
               className="rounded-xl border-2 px-3 py-2.5 font-semibold text-sm outline-none"
-              style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }} />
+              style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }} />
             <input type="number" inputMode="numeric" placeholder="Total pages *" value={form.total_pages}
               onChange={(e) => setForm((f) => ({ ...f, total_pages: e.target.value }))}
               className="rounded-xl border-2 px-3 py-2.5 font-semibold text-sm outline-none"
-              style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }} />
+              style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }} />
             <div className="flex gap-2">
               <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as Category }))}
                 className="flex-1 rounded-xl border-2 px-3 py-2.5 font-semibold text-sm outline-none"
-                style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }}>
+                style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
               <select value={form.language} onChange={(e) => setForm((f) => ({ ...f, language: e.target.value as Language }))}
                 className="flex-1 rounded-xl border-2 px-3 py-2.5 font-semibold text-sm outline-none"
-                style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }}>
+                style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}>
                 {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
               </select>
             </div>
@@ -227,7 +227,7 @@ export default function BooksPage() {
             <div className="flex gap-2 mt-1">
               <button onClick={() => { setShowAdd(false); setError('') }}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-sm"
-                style={{ background: '#F0E8E0', color: '#9A9A9A' }}>
+                style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}>
                 <X size={14} /> Cancel
               </button>
               <button onClick={handleAdd} disabled={saving}
@@ -251,13 +251,13 @@ export default function BooksPage() {
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search title or author…"
               className="w-full rounded-xl border-2 pl-9 pr-9 py-2.5 font-semibold text-sm outline-none"
-              style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }}
+              style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
                 className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center"
-                style={{ background: '#F0E8E0' }}
+                style={{ background: 'var(--color-surface)' }}
                 aria-label="Clear search"
               >
                 <X size={12} color="#9A9A9A" />
@@ -269,7 +269,7 @@ export default function BooksPage() {
               value={genreFilter}
               onChange={(e) => setGenreFilter(e.target.value as Category | 'All')}
               className="flex-1 min-w-0 rounded-xl border-2 px-3 py-2 font-semibold text-sm outline-none"
-              style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }}
+              style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}
               aria-label="Filter by genre"
             >
               <option value="All">All genres</option>
@@ -279,7 +279,7 @@ export default function BooksPage() {
               value={pagesFilter}
               onChange={(e) => setPagesFilter(e.target.value as PagesBucket)}
               className="flex-1 min-w-0 rounded-xl border-2 px-3 py-2 font-semibold text-sm outline-none"
-              style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }}
+              style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}
               aria-label="Filter by total pages"
             >
               {PAGES_BUCKETS.map((b) => (
@@ -289,7 +289,7 @@ export default function BooksPage() {
           </div>
           {filtersActive && (
             <div className="flex items-center justify-between mt-2 px-1">
-              <span className="text-xs font-bold" style={{ color: '#9A9A9A' }}>
+              <span className="text-xs font-bold" style={{ color: 'var(--color-muted)' }}>
                 {filteredBooks.length} of {books.length} {books.length === 1 ? 'book' : 'books'}
               </span>
               <button
@@ -331,7 +331,7 @@ export default function BooksPage() {
 
             {/* Book rows */}
             {(expandedCategory === null || expandedCategory === cat) && (
-              <div className="rounded-2xl overflow-hidden" style={{ background: '#FFFFFF', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
+              <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-card)', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
                 {catBooks.map((book, idx) => {
                   const cp = getCurrentPage(book.id, logs)
                   const pct = progressPercent(cp, book.total_pages)
@@ -340,7 +340,7 @@ export default function BooksPage() {
 
                   return (
                     <div key={book.id}>
-                      {idx > 0 && <div style={{ height: 1, background: '#F5EFE8', margin: '0 12px' }} />}
+                      {idx > 0 && <div style={{ height: 1, background: 'var(--color-surface)', margin: '0 12px' }} />}
 
                       {/* Main row */}
                       <div className="px-3 pt-3 pb-2">
@@ -358,10 +358,10 @@ export default function BooksPage() {
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                               {book.author && (
-                                <span className="text-[11px] truncate max-w-[130px]" style={{ color: '#9A9A9A' }}>{book.author}</span>
+                                <span className="text-[11px] truncate max-w-[130px]" style={{ color: 'var(--color-muted)' }}>{book.author}</span>
                               )}
                               <span className="text-[10px] px-1.5 py-0.5 rounded font-bold"
-                                style={{ background: '#F0E8E0', color: '#9A9A9A' }}>{book.language}</span>
+                                style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}>{book.language}</span>
                             </div>
                           </div>
 
@@ -378,7 +378,7 @@ export default function BooksPage() {
                             </button>
                             <button onClick={() => handleDelete(book.id)}
                               className="w-7 h-7 rounded-lg flex items-center justify-center"
-                              style={{ background: '#F5EFE8' }}
+                              style={{ background: 'var(--color-surface)' }}
                               aria-label="Delete">
                               <Trash2 size={13} color="#C0B8B0" />
                             </button>
@@ -388,7 +388,7 @@ export default function BooksPage() {
                         {/* Progress bar */}
                         <div className="mt-2 pl-[46px]">
                           <ProgressBar percent={pct} color={color} height={5} />
-                          <span className="text-[10px] mt-0.5 block" style={{ color: '#B0A8A0' }}>
+                          <span className="text-[10px] mt-0.5 block" style={{ color: 'var(--color-subtle)' }}>
                             p.{cp} / {book.total_pages}
                           </span>
                         </div>
@@ -397,44 +397,44 @@ export default function BooksPage() {
                       {/* Edit panel */}
                       {isEditing && (
                         <div className="mx-3 mb-3 p-3 rounded-xl flex flex-col gap-2"
-                          style={{ background: '#FFF8F0', border: `1.5px solid ${color}30` }}>
+                          style={{ background: 'var(--color-bg)', border: `1.5px solid ${color}30` }}>
                           <input type="text" value={editForm.title}
                             onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
                             placeholder="Title *"
                             className="rounded-lg border-2 px-3 py-2 text-sm font-semibold outline-none"
-                            style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }} />
+                            style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }} />
                           <input type="text" value={editForm.author}
                             onChange={(e) => setEditForm((f) => ({ ...f, author: e.target.value }))}
                             placeholder="Author"
                             className="rounded-lg border-2 px-3 py-2 text-sm font-semibold outline-none"
-                            style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }} />
+                            style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }} />
                           <div className="flex gap-2">
                             <div className="flex-1">
-                              <label className="text-[10px] font-bold block mb-1" style={{ color: '#9A9A9A' }}>Total pages</label>
+                              <label className="text-[10px] font-bold block mb-1" style={{ color: 'var(--color-muted)' }}>Total pages</label>
                               <input type="number" inputMode="numeric" value={editForm.total_pages}
                                 onChange={(e) => setEditForm((f) => ({ ...f, total_pages: e.target.value }))}
                                 className="w-full rounded-lg border-2 px-3 py-2 text-sm font-semibold outline-none"
-                                style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }} />
+                                style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }} />
                             </div>
                             <div className="flex-1">
-                              <label className="text-[10px] font-bold block mb-1" style={{ color: '#9A9A9A' }}>Current page</label>
+                              <label className="text-[10px] font-bold block mb-1" style={{ color: 'var(--color-muted)' }}>Current page</label>
                               <input type="number" inputMode="numeric" value={editForm.current_page}
                                 onChange={(e) => setEditForm((f) => ({ ...f, current_page: e.target.value }))}
                                 className="w-full rounded-lg border-2 px-3 py-2 text-sm font-semibold outline-none"
-                                style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }} />
+                                style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }} />
                             </div>
                           </div>
                           <div className="flex gap-2">
                             <select value={editForm.category}
                               onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value as Category }))}
                               className="flex-1 rounded-lg border-2 px-2 py-2 text-sm font-semibold outline-none"
-                              style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }}>
+                              style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}>
                               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                             </select>
                             <select value={editForm.language}
                               onChange={(e) => setEditForm((f) => ({ ...f, language: e.target.value as Language }))}
                               className="flex-1 rounded-lg border-2 px-2 py-2 text-sm font-semibold outline-none"
-                              style={{ borderColor: '#F0E8E0', background: '#FFFFFF' }}>
+                              style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}>
                               {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
                             </select>
                           </div>
@@ -442,7 +442,7 @@ export default function BooksPage() {
                           <div className="flex gap-2">
                             <button onClick={() => setEditingId(null)}
                               className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg font-bold text-sm"
-                              style={{ background: '#F0E8E0', color: '#9A9A9A' }}>
+                              style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}>
                               <X size={13} /> Cancel
                             </button>
                             <button onClick={() => handleSaveEdit(book.id)} disabled={saving}
@@ -463,7 +463,7 @@ export default function BooksPage() {
       })}
 
       {books.length === 0 && (
-        <div className="text-center py-16" style={{ color: '#9A9A9A' }}>
+        <div className="text-center py-16" style={{ color: 'var(--color-muted)' }}>
           <BookOpen size={48} color="#F0E8E0" className="mx-auto mb-3" />
           <p className="font-bold">No books yet!</p>
           <p className="text-sm">Add a book or scan your shelf.</p>
@@ -471,7 +471,7 @@ export default function BooksPage() {
       )}
 
       {books.length > 0 && filteredBooks.length === 0 && (
-        <div className="text-center py-12" style={{ color: '#9A9A9A' }}>
+        <div className="text-center py-12" style={{ color: 'var(--color-muted)' }}>
           <Search size={40} color="#F0E8E0" className="mx-auto mb-3" />
           <p className="font-bold">No matches</p>
           <p className="text-sm mb-3">Try a different search or clear the filters.</p>

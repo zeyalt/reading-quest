@@ -208,7 +208,7 @@ export default function AddPhotoPage() {
           <button
             onClick={() => { setStep('capture'); setDetected([]); setPreview(null) }}
             className="px-5 py-3 rounded-xl font-bold"
-            style={{ background: '#F0E8E0', color: '#9A9A9A' }}
+            style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}
           >
             Add More
           </button>
@@ -228,8 +228,8 @@ export default function AddPhotoPage() {
   return (
     <div className="p-4 tab-content">
       <div className="flex items-center gap-3 mb-4">
-        <button onClick={() => router.back()} className="p-2 rounded-xl" style={{ background: '#F0E8E0' }} aria-label="Go back">
-          <ChevronLeft size={20} style={{ color: '#9A9A9A' }} />
+        <button onClick={() => router.back()} className="p-2 rounded-xl" style={{ background: 'var(--color-surface)' }} aria-label="Go back">
+          <ChevronLeft size={20} style={{ color: 'var(--color-muted)' }} />
         </button>
         <Camera size={24} style={{ color: '#FF6B35' }} />
         <h1 className="text-2xl" style={{ fontFamily: 'var(--font-fredoka), cursive' }}>
@@ -241,14 +241,14 @@ export default function AddPhotoPage() {
         <div className="flex flex-col gap-4">
           <div
             className="rounded-2xl p-8 flex flex-col items-center gap-4 cursor-pointer"
-            style={{ background: '#FFF0E8', border: '2px dashed #FF6B35' }}
+            style={{ background: 'var(--color-bg)', border: '2px dashed #FF6B35' }}
             onClick={() => fileRef.current?.click()}
           >
             <Camera size={48} style={{ color: '#FF6B35' }} />
             <p className="font-bold text-center" style={{ color: '#FF6B35' }}>
               Take a photo of your bookshelf
             </p>
-            <p className="text-sm text-center" style={{ color: '#9A9A9A' }}>
+            <p className="text-sm text-center" style={{ color: 'var(--color-muted)' }}>
               Point the camera at book spines for best results
             </p>
           </div>
@@ -268,7 +268,7 @@ export default function AddPhotoPage() {
               }
             }}
             className="py-3 rounded-xl font-bold"
-            style={{ background: '#F0E8E0', color: '#9A9A9A' }}
+            style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}
           >
             Choose from gallery
           </button>
@@ -310,7 +310,7 @@ export default function AddPhotoPage() {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={preview} alt="Shelf" className="w-full rounded-2xl max-h-40 object-cover mb-4" />
           )}
-          <p className="font-bold mb-3" style={{ color: '#9A9A9A' }}>
+          <p className="font-bold mb-3" style={{ color: 'var(--color-muted)' }}>
             Found {detected.length} book{detected.length !== 1 ? 's' : ''}. Review and add:
           </p>
           {detected.map((book, idx) => (
@@ -319,7 +319,7 @@ export default function AddPhotoPage() {
               className="rounded-2xl p-4 mb-3"
               style={{
                 background: book.duplicate ? '#FFF8F0' : '#FFFFFF',
-                boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
+                boxShadow: 'var(--color-shadow)',
                 opacity: book.include ? 1 : 0.6,
               }}
             >
@@ -345,7 +345,7 @@ export default function AddPhotoPage() {
                   onChange={(e) => updateDetected(idx, { title: e.target.value })}
                   placeholder="Title"
                   className="rounded-xl border-2 px-3 py-2 font-semibold text-sm outline-none"
-                  style={{ borderColor: '#F0E8E0' }}
+                  style={{ borderColor: 'var(--color-surface)' }}
                 />
                 <input
                   type="text"
@@ -353,7 +353,7 @@ export default function AddPhotoPage() {
                   onChange={(e) => updateDetected(idx, { author: e.target.value })}
                   placeholder="Author"
                   className="rounded-xl border-2 px-3 py-2 font-semibold text-sm outline-none"
-                  style={{ borderColor: '#F0E8E0' }}
+                  style={{ borderColor: 'var(--color-surface)' }}
                 />
                 <div className="flex gap-2">
                   <input
@@ -369,7 +369,7 @@ export default function AddPhotoPage() {
                     value={book.category}
                     onChange={(e) => updateDetected(idx, { category: e.target.value as Category })}
                     className="flex-1 rounded-xl border-2 px-2 py-2 font-semibold text-sm outline-none"
-                    style={{ borderColor: '#F0E8E0' }}
+                    style={{ borderColor: 'var(--color-surface)' }}
                   >
                     {CATEGORIES.map((c) => (
                       <option key={c} value={c}>{c}</option>
@@ -380,7 +380,7 @@ export default function AddPhotoPage() {
                   value={book.language}
                   onChange={(e) => updateDetected(idx, { language: e.target.value as Language })}
                   className="w-full rounded-xl border-2 px-2 py-2 font-semibold text-sm outline-none"
-                  style={{ borderColor: '#F0E8E0' }}
+                  style={{ borderColor: 'var(--color-surface)' }}
                 >
                   {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
                 </select>

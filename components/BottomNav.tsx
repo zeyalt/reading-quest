@@ -2,13 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Calendar, BookOpen, BarChart2 } from 'lucide-react'
+import { Home, NotebookPen, BookOpen } from 'lucide-react'
 
+// Three tabs: Home (dashboard), Diary (per-day log), Books (library).
+// Schedule + Progress were merged in: Diary handles per-day logging while
+// Home absorbs the streak calendar and milestones formerly on Progress.
 const tabs = [
   { href: '/', label: 'Home', Icon: Home },
-  { href: '/schedule', label: 'Schedule', Icon: Calendar },
+  { href: '/diary', label: 'Diary', Icon: NotebookPen },
   { href: '/books', label: 'Books', Icon: BookOpen },
-  { href: '/progress', label: 'Progress', Icon: BarChart2 },
 ]
 
 export default function BottomNav() {
@@ -18,7 +20,7 @@ export default function BottomNav() {
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 max-w-[480px] mx-auto"
       style={{
-        background: '#FFFFFF',
+        background: 'var(--color-card)',
         borderTop: '1px solid #F0E8E0',
         boxShadow: '0 -2px 16px rgba(0,0,0,0.06)',
         height: 60,
