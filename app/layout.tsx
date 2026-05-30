@@ -23,7 +23,7 @@ const fredoka = Fredoka({
 })
 
 export const metadata: Metadata = {
-  title: 'Reading Quest',
+  title: 'ReadQuest',
   description: 'Track your reading adventure!',
   manifest: '/manifest.json',
   appleWebApp: {

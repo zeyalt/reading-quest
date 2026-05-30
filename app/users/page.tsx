@@ -114,7 +114,7 @@ export default function UsersPage() {
           className="text-3xl"
           style={{ fontFamily: 'var(--font-fredoka), cursive', color: '#FF6B35' }}
         >
-          Reading Quest
+          ReadQuest
         </h1>
         <p className="text-sm mt-1 font-bold" style={{ color: 'var(--color-muted)' }}>
           Who&apos;s reading today?
