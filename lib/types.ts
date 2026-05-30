@@ -18,15 +18,6 @@ export interface Book {
   is_active: boolean
 }
 
-export interface Schedule {
-  id: string
-  user_id: string
-  day_of_week: number // 0=Mon ... 6=Sun
-  book_id: string | null
-  target_pages: number
-  book?: Book | null
-}
-
 export interface ReadingLog {
   id: string
   user_id: string
@@ -86,16 +77,6 @@ export const CATEGORY_COLORS: Record<Category, string> = {
   Science: '#2EC4B6',
   Chinese: '#E85D75',
   Other: '#845EC2',
-}
-
-export const CATEGORY_EMOJIS: Record<Category, string> = {
-  Mystery: '🔍',
-  Fiction: '📖',
-  Comic: '💥',
-  Singapore: '🇸🇬',
-  Science: '🔬',
-  Chinese: '🈶',
-  Other: '📚',
 }
 
 export const LANGUAGE_FLAGS: Record<Language, string> = {

@@ -9,12 +9,6 @@ export function todaySGT(): string {
   return sgtDate.toISOString().split('T')[0]
 }
 
-export function toSGTDate(date: Date): string {
-  const offsetMs = (SGT_OFFSET - date.getTimezoneOffset()) * 60000
-  const sgtDate = new Date(date.getTime() + offsetMs)
-  return sgtDate.toISOString().split('T')[0]
-}
-
 export function getCurrentPage(bookId: string, logs: ReadingLog[]): number {
   const latest = logs
     .filter((l) => l.book_id === bookId)
