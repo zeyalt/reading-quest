@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { Plus, Trash2, Check, Loader2 } from 'lucide-react'
 import type { Book, ReadingLog } from '@/lib/types'
 import CategoryIcon from '@/components/CategoryIcon'
+import BookPickerDropdown from '@/components/BookPickerDropdown'
 
 interface Props {
   userId: string
@@ -54,6 +55,29 @@ export default function DateLogPanel({ userId, date, books, logs, onChanged }: P
 
   const existing = rows.filter((r) => r.currentPage != null)
   const eligibleForAdd = rows.filter((r) => r.currentPage == null)
+
+  // Build options for the dropdown. Sort the most recently-updated books to the
+  // top so the book someone last read is the first thing they see when logging.
+  // "Updated" = the latest reading-log timestamp for the book; books never
+  // logged fall back to when they were added (both are ISO timestamps, so they
+  // compare directly). Newest first.
+  const lastActivity = (bookId: string, createdAt: string): string => {
+    let latest = ''
+    for (const l of logs) {
+      if (l.book_id === bookId && l.logged_at > latest) latest = l.logged_at
+    }
+    return latest || createdAt
+  }
+  const bookPickerOptions = [...eligibleForAdd]
+    .sort((a, b) =>
+      lastActivity(b.book.id, b.book.created_at).localeCompare(
+        lastActivity(a.book.id, a.book.created_at),
+      ),
+    )
+    .map((r) => ({
+      book: r.book,
+      prevPage: r.prevPage,
+    }))
 
   // ---------------------------- Mutations ----------------------------
   async function upsertLog(bookId: string, currentPage: number) {
@@ -133,20 +157,12 @@ export default function DateLogPanel({ userId, date, books, logs, onChanged }: P
           <p className="text-xs font-bold" style={{ color: 'var(--color-muted)' }}>
             {existing.length === 0 ? 'Log a book' : '+ Add another book'}
           </p>
-          <select
+          <BookPickerDropdown
+            options={bookPickerOptions}
             value={addBookId}
-            onChange={(e) => setAddBookId(e.target.value)}
-            className="rounded-lg border-2 px-3 py-2 font-semibold text-sm outline-none"
-            style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}
-            aria-label="Pick a book"
-          >
-            <option value="">Pick a book…</option>
-            {eligibleForAdd.map((r) => (
-              <option key={r.book.id} value={r.book.id}>
-                {r.book.title} {r.book.language && `(${r.book.language})`} — p.{r.prevPage}/{r.book.total_pages}
-              </option>
-            ))}
-          </select>
+            onChange={setAddBookId}
+            placeholder="Pick a book…"
+          />
           <div className="flex items-center gap-2">
             <input
               type="number"
@@ -204,10 +220,10 @@ function ExistingLogRow({
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: 'var(--color-card)', border: '1.5px solid var(--color-surface)' }}>
+    <div className="flex items-start gap-2 rounded-xl px-3 py-2" style={{ background: 'var(--color-card)', border: '1.5px solid var(--color-surface)' }}>
       <CategoryIcon category={row.book.category} size={12} containerSize={26} />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold truncate">{row.book.title}</p>
+        <p className="text-sm font-bold leading-snug">{row.book.title}</p>
         <p className="text-[10px]" style={{ color: 'var(--color-muted)' }}>
           {row.deltaPages > 0 ? `+${row.deltaPages} pages from p.${row.prevPage}` : `no change from p.${row.prevPage}`}
         </p>
@@ -224,20 +240,35 @@ function ExistingLogRow({
           onBlur={commit}
           onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
           className="w-16 rounded-lg border-2 px-2 py-1 font-bold text-sm text-center outline-none"
-          style={{ borderColor: dirty ? '#FF6B35' : '#F0E8E0', background: dirty ? '#FFF8F0' : '#FFFFFF' }}
+          style={{
+            color: 'var(--color-text)',
+            borderColor: dirty ? '#FF6B35' : 'var(--color-surface)',
+            background: dirty ? 'var(--color-bg)' : 'var(--color-card)',
+          }}
         />
         {busy ? (
-          <Loader2 size={14} className="animate-spin" />
-        ) : dirty ? (
-          <Check size={14} color="#FF6B35" />
-        ) : null}
+          <Loader2 size={14} className="animate-spin" style={{ color: '#FF6B35' }} />
+        ) : (
+          <button
+            onClick={commit}
+            disabled={!dirty}
+            className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+            style={{
+              background: dirty ? '#FF6B35' : 'var(--color-surface)',
+              opacity: dirty ? 1 : 0.4,
+            }}
+            aria-label="Confirm page number"
+          >
+            <Check size={14} color={dirty ? '#fff' : 'var(--color-muted)'} />
+          </button>
+        )}
         <button
           onClick={onDelete}
           className="w-7 h-7 flex items-center justify-center rounded-lg"
           style={{ background: 'var(--color-surface)' }}
           aria-label="Delete log"
         >
-          <Trash2 size={12} color="#9A9A9A" />
+          <Trash2 size={12} color="var(--color-muted)" />
         </button>
       </div>
     </div>

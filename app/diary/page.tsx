@@ -1,14 +1,13 @@
 'use client'
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Book, ReadingLog, ReadingPlan, DAY_NAMES, LANGUAGE_FLAGS, Language } from '@/lib/types'
 import { todaySGT, getPagesReadOnDate } from '@/lib/utils'
 import { useUser } from '@/components/UserContext'
 import DateLogPanel from '@/components/DateLogPanel'
 import CategoryIcon from '@/components/CategoryIcon'
-import { ChevronLeft, ChevronRight, ClipboardList, Star, BookOpen } from 'lucide-react'
+import { ChevronLeft, ChevronRight, BookOpen } from 'lucide-react'
 
 // Convert JS Date.getUTCDay() (0=Sun..6=Sat) to the app's 0=Mon..6=Sun.
 function appDow(date: Date): number {
@@ -112,20 +111,11 @@ function DiaryContent() {
   return (
     <div className="p-4 pt-12 tab-content">
       {/* Title row */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <BookOpen size={28} style={{ color: '#FF6B35' }} />
-          <h1 className="text-2xl" style={{ fontFamily: 'var(--font-fredoka), cursive' }}>
-            {user.name}&apos;s Diary
-          </h1>
-        </div>
-        <Link
-          href="/diary/plan"
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold"
-          style={{ background: 'var(--color-bg)', color: '#FF6B35' }}
-        >
-          <ClipboardList size={14} /> Plan
-        </Link>
+      <div className="flex items-center gap-2">
+        <BookOpen size={28} style={{ color: '#FF6B35' }} />
+        <h1 className="text-2xl" style={{ fontFamily: 'var(--font-fredoka), cursive' }}>
+          {user.name}&apos;s Diary
+        </h1>
       </div>
 
       {/* Date navigator */}
@@ -143,7 +133,7 @@ function DiaryContent() {
           style={{ background: 'var(--color-surface)' }}
           aria-label="Previous day"
         >
-          <ChevronLeft size={18} color="#9A9A9A" />
+          <ChevronLeft size={18} color="var(--color-muted)" />
         </button>
 
         <div className="flex-1 flex flex-col items-center">
@@ -153,8 +143,9 @@ function DiaryContent() {
             onChange={(e) => {
               if (e.target.value) setDate(e.target.value)
             }}
-            className="bg-transparent text-center font-bold outline-none"
-            style={{ color: isToday ? accent : isFuture ? '#9A9A9A' : '#3A3A3A' }}
+            onClick={(e) => e.currentTarget.showPicker?.()}
+            className="date-trigger bg-transparent text-center font-bold outline-none cursor-pointer"
+            style={{ color: isToday ? accent : isFuture ? 'var(--color-muted)' : 'var(--color-text)' }}
             aria-label="Pick a date"
           />
           <span className="text-[10px] font-bold" style={{ color: 'var(--color-muted)' }}>
@@ -168,7 +159,7 @@ function DiaryContent() {
           style={{ background: 'var(--color-surface)' }}
           aria-label="Next day"
         >
-          <ChevronRight size={18} color="#9A9A9A" />
+          <ChevronRight size={18} color="var(--color-muted)" />
         </button>
       </div>
 
@@ -188,31 +179,24 @@ function DiaryContent() {
         {niceDate}
       </h2>
 
-      {/* Target / Rest line */}
-      <div
-        className="rounded-xl p-3 mb-3 flex items-center gap-2 font-bold text-sm"
-        style={{
-          background: hitTarget ? '#d4edda' : target ? '#FFF8F0' : '#F7F7F7',
-          color: hitTarget ? '#155724' : target ? '#FF6B35' : '#9A9A9A',
-        }}
-      >
-        {target ? (
-          <>
-            <span>{LANGUAGE_FLAGS[target.language]}</span>
-            <span className="flex-1">
-              Target: {target.pages} pages of {target.language}
-            </span>
-            <span>
-              {totalDelta} / {target.pages}{hitTarget ? ' ✓' : ''}
-            </span>
-          </>
-        ) : (
-          <>
-            <Star size={14} style={{ color: '#FFD93D' }} fill="#FFD93D" />
-            Rest day
-          </>
-        )}
-      </div>
+      {/* Target line */}
+      {target && (
+        <div
+          className="rounded-xl p-3 mb-3 flex items-center gap-2 font-bold text-sm"
+          style={{
+            background: hitTarget ? 'var(--success-bg)' : 'var(--color-bg)',
+            color: hitTarget ? 'var(--success-fg)' : '#FF6B35',
+          }}
+        >
+          <span>{LANGUAGE_FLAGS[target.language]}</span>
+          <span className="flex-1">
+            Target: {target.pages} pages of {target.language}
+          </span>
+          <span>
+            {totalDelta} / {target.pages}{hitTarget ? ' ✓' : ''}
+          </span>
+        </div>
+      )}
 
       {/* Log content */}
       <div

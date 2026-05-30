@@ -7,6 +7,7 @@ import {
   todaySGT,
   todayDayOfWeek,
   getPagesReadOnDate,
+  getReadingDates,
   getStreak,
   isComplete,
 } from '@/lib/utils'
@@ -115,7 +116,9 @@ export default function Dashboard() {
     const year = sgt.getFullYear()
     const month = sgt.getMonth()
     const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const readDates = new Set(logs.map((l) => l.date))
+    // Green a day only if pages actually advanced (matches the Past-7 list),
+    // not merely because a log row exists for that date.
+    const readDates = getReadingDates(logs)
     const cells: Array<{ date: string; read: boolean; today: boolean; empty: boolean }> = []
     const firstDay = new Date(year, month, 1)
     const padStart = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1
@@ -207,16 +210,16 @@ export default function Dashboard() {
       </div>
 
       {/* Today snapshot — tap to jump into Diary */}
-      <Link
-        href="/diary"
-        className="block rounded-2xl p-3 mb-4"
-        style={{ background: 'var(--color-card)', boxShadow: 'var(--color-shadow)' }}
-      >
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-bold" style={{ color: 'var(--color-muted)' }}>Today</span>
-          <ChevronRight size={14} color="#9A9A9A" />
-        </div>
-        {todayTarget ? (
+      {todayTarget && (
+        <Link
+          href="/diary"
+          className="block rounded-2xl p-3 mb-4"
+          style={{ background: 'var(--color-card)', boxShadow: 'var(--color-shadow)' }}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-bold" style={{ color: 'var(--color-muted)' }}>Today</span>
+            <ChevronRight size={14} color="var(--color-muted)" />
+          </div>
           <div className="flex items-center gap-2">
             <Flag size={16} style={{ color: hitTodayTarget ? '#00C9A7' : '#FF6B35' }} />
             <span className="text-sm font-bold flex-1">
@@ -229,13 +232,8 @@ export default function Dashboard() {
               {todayPagesTotal} / {todayTarget.pages}{hitTodayTarget ? ' ✓' : ''}
             </span>
           </div>
-        ) : (
-          <div className="flex items-center gap-2 font-bold text-sm" style={{ color: 'var(--color-muted)' }}>
-            <Star size={16} style={{ color: '#FFD93D' }} fill="#FFD93D" />
-            Rest day — read anything you like!
-          </div>
-        )}
-      </Link>
+        </Link>
+      )}
 
       {/* Stats triplet */}
       <div className="grid grid-cols-3 gap-3 mb-4">
@@ -310,8 +308,13 @@ export default function Dashboard() {
                     {day.items.map((x) => (
                       <div key={x.book.id} className="flex items-center gap-1 text-xs">
                         <CategoryIcon category={x.book.category} size={9} containerSize={16} />
-                        <span className="font-bold">{x.book.title}</span>
-                        <span style={{ color: 'var(--color-muted)' }}>+{x.delta}</span>
+                        {/* Delta is inline-trailing so it stays attached to the
+                            last word of the title instead of flying to the far
+                            right when the title wraps to a second line. */}
+                        <span className="font-bold leading-snug">
+                          {x.book.title}
+                          <span className="font-normal" style={{ color: 'var(--color-muted)', whiteSpace: 'nowrap' }}> +{x.delta}</span>
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -319,11 +322,11 @@ export default function Dashboard() {
               </div>
               <span
                 className="text-[11px] font-bold flex-shrink-0"
-                style={{ color: day.hit ? '#00C9A7' : day.target ? '#9A9A9A' : '#C0B8B0' }}
+                style={{ color: day.hit ? '#00C9A7' : day.target ? 'var(--color-muted)' : 'var(--color-subtle)' }}
               >
                 {day.target ? `${day.totalDelta}/${day.target.pages}${day.hit ? ' ✓' : ''}` : '—'}
               </span>
-              <ChevronRight size={12} color="#C0B8B0" />
+              <ChevronRight size={12} color="var(--color-subtle)" />
             </Link>
           ))}
         </div>
@@ -342,8 +345,8 @@ export default function Dashboard() {
             </h2>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => setCalMonthOffset((o) => o - 1)} className="p-1 rounded hover:bg-gray-100">
-              <ChevronLeft size={14} color="#9A9A9A" />
+            <button onClick={() => setCalMonthOffset((o) => o - 1)} className="p-1 rounded hover:opacity-70 transition-opacity">
+              <ChevronLeft size={14} color="var(--color-muted)" />
             </button>
             <span className="text-xs font-bold" style={{ color: 'var(--color-muted)', minWidth: 80, textAlign: 'center' }}>
               {calendar.monthLabel}
@@ -352,9 +355,9 @@ export default function Dashboard() {
               onClick={() => setCalMonthOffset((o) => Math.min(0, o + 1))}
               style={{ opacity: calMonthOffset === 0 ? 0.3 : 1 }}
               disabled={calMonthOffset === 0}
-              className="p-1 rounded hover:bg-gray-100 disabled:cursor-not-allowed"
+              className="p-1 rounded hover:opacity-70 transition-opacity disabled:cursor-not-allowed"
             >
-              <ChevronRight size={14} color="#9A9A9A" />
+              <ChevronRight size={14} color="var(--color-muted)" />
             </button>
           </div>
         </div>
@@ -373,8 +376,8 @@ export default function Dashboard() {
                     ? accent
                     : cd.read
                       ? '#00C9A7'
-                      : '#F0E8E0',
-                color: cd.today || cd.read ? '#FFFFFF' : cd.empty ? 'transparent' : '#9A9A9A',
+                      : 'var(--color-surface)',
+                color: cd.today || cd.read ? '#FFFFFF' : cd.empty ? 'transparent' : 'var(--color-muted)',
               }}
             >
               {!cd.empty && new Date(cd.date + 'T12:00:00').getDate()}
@@ -408,7 +411,7 @@ export default function Dashboard() {
               key={m.label}
               className="flex flex-col items-center justify-start gap-1.5 px-1.5 pt-2.5 pb-2 rounded-xl"
               style={{
-                background: m.achieved ? accent + '12' : '#F7F4F0',
+                background: m.achieved ? accent + '12' : 'var(--color-surface)',
                 border: m.achieved ? `1.5px solid ${accent}40` : '1.5px solid transparent',
                 opacity: m.achieved ? 1 : 0.6,
               }}
@@ -416,8 +419,8 @@ export default function Dashboard() {
               <div
                 className="flex items-center justify-center rounded-full flex-shrink-0"
                 style={{
-                  background: m.achieved ? accent + '25' : '#E8E2DC',
-                  color: m.achieved ? accent : '#9A9A9A',
+                  background: m.achieved ? accent + '25' : 'color-mix(in srgb, var(--color-muted) 22%, transparent)',
+                  color: m.achieved ? accent : 'var(--color-muted)',
                   width: 36,
                   height: 36,
                 }}
@@ -427,7 +430,7 @@ export default function Dashboard() {
               <span
                 className="text-[10px] font-bold text-center leading-tight"
                 style={{
-                  color: m.achieved ? accent : '#9A9A9A',
+                  color: m.achieved ? accent : 'var(--color-muted)',
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',

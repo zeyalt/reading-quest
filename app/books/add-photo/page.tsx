@@ -273,7 +273,7 @@ export default function AddPhotoPage() {
             Choose from gallery
           </button>
           {error && (
-            <div className="rounded-xl p-3 font-bold text-sm" style={{ background: '#fde8e8', color: '#c0392b' }}>
+            <div className="rounded-xl p-3 font-bold text-sm" style={{ background: 'var(--error-bg)', color: 'var(--error-fg)' }}>
               {error}
             </div>
           )}
@@ -318,7 +318,7 @@ export default function AddPhotoPage() {
               key={idx}
               className="rounded-2xl p-4 mb-3"
               style={{
-                background: book.duplicate ? '#FFF8F0' : '#FFFFFF',
+                background: book.duplicate ? 'var(--color-bg)' : 'var(--color-card)',
                 boxShadow: 'var(--color-shadow)',
                 opacity: book.include ? 1 : 0.6,
               }}
@@ -363,7 +363,7 @@ export default function AddPhotoPage() {
                     onChange={(e) => updateDetected(idx, { total_pages: parseInt(e.target.value) || '' })}
                     placeholder={book.pagesLoading ? 'Looking up...' : 'Pages *'}
                     className="flex-1 rounded-xl border-2 px-3 py-2 font-semibold text-sm outline-none"
-                    style={{ borderColor: book.total_pages === '' && !book.pagesLoading ? '#EE4266' : '#F0E8E0' }}
+                    style={{ borderColor: book.total_pages === '' && !book.pagesLoading ? '#EE4266' : 'var(--color-surface)' }}
                   />
                   <select
                     value={book.category}
@@ -388,7 +388,7 @@ export default function AddPhotoPage() {
             </div>
           ))}
           {error && (
-            <div className="rounded-xl p-3 font-bold text-sm mb-3" style={{ background: '#fde8e8', color: '#c0392b' }}>
+            <div className="rounded-xl p-3 font-bold text-sm mb-3" style={{ background: 'var(--error-bg)', color: 'var(--error-fg)' }}>
               {error}
             </div>
           )}

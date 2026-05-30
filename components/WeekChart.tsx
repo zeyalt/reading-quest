@@ -25,14 +25,14 @@ export default function WeekChart({ data, labels, highlightIdx }: Props) {
                 className="w-full rounded-t-lg transition-all duration-500"
                 style={{
                   height: pages > 0 ? `${heightPct}%` : 4,
-                  background: isToday ? '#FF6B35' : pages > 0 ? '#FFD93D' : '#F0E8E0',
+                  background: isToday ? '#FF6B35' : pages > 0 ? '#FFD93D' : 'var(--color-surface)',
                   minHeight: 4,
                 }}
               />
             </div>
             <span
               className="text-[10px] font-bold leading-none"
-              style={{ color: isToday ? '#FF6B35' : '#9A9A9A' }}
+              style={{ color: isToday ? '#FF6B35' : 'var(--color-muted)' }}
             >
               {labels?.[i] ?? DAY_NAMES[i]}
             </span>

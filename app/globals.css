@@ -16,6 +16,14 @@
   --color-text: #2D2D2D;
   --color-subtle: #C0B8B0;
   --color-shadow: 0 2px 16px rgba(0,0,0,0.06);
+
+  /* Semantic state colors — themed so success/error read correctly in both
+     modes. Success is teal (the app's brand "done/hit" colour); error is the
+     brand pink/red. */
+  --success-bg: rgba(0, 201, 167, 0.14);
+  --success-fg: #0F766E;   /* teal-700, ~4.5:1 on light surfaces */
+  --error-bg: rgba(238, 66, 102, 0.12);
+  --error-fg: #C0392B;
 }
 
 html[data-theme="dark"] {
@@ -31,6 +39,11 @@ html[data-theme="dark"] {
   --color-text: #EAEAEA;
   --color-subtle: #505050;
   --color-shadow: 0 2px 16px rgba(0,0,0,0.3);
+
+  --success-bg: rgba(0, 201, 167, 0.20);
+  --success-fg: #4FD9C4;   /* light teal, legible on #1E1E1E */
+  --error-bg: rgba(238, 66, 102, 0.20);
+  --error-fg: #FF8FA3;
 }
 
 * {
@@ -48,12 +61,12 @@ body {
 }
 
 body {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-nunito), 'Nunito', sans-serif;
   font-weight: 600;
 }
 
 h1, h2, h3 {
-  font-family: 'Fredoka One', cursive;
+  font-family: var(--font-fredoka), 'Fredoka', cursive;
   font-weight: 400;
 }
 
@@ -80,7 +93,12 @@ h1, h2, h3 {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #f0e8e0 25%, #ffe8d6 50%, #f0e8e0 75%);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface) 25%,
+    color-mix(in srgb, var(--color-surface) 60%, var(--color-card)) 50%,
+    var(--color-surface) 75%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 8px;
@@ -100,7 +118,7 @@ h1, h2, h3 {
 /* Success flash */
 @keyframes successFlash {
   0% { background-color: transparent; }
-  30% { background-color: #d4edda; }
+  30% { background-color: var(--success-bg); }
   100% { background-color: transparent; }
 }
 
@@ -127,6 +145,14 @@ h1, h2, h3 {
 }
 .milestones-scroll::-webkit-scrollbar {
   display: none;                  /* Chromium / Safari */
+}
+
+/* Diary date picker: hide the browser's built-in calendar icon so the whole
+   date text is the trigger. A click anywhere on the input opens the picker via
+   showPicker() (see app/diary/page.tsx). */
+.date-trigger::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
 }
 
 /* Offline banner */

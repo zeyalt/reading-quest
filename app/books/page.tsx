@@ -244,7 +244,7 @@ export default function BooksPage() {
       {books.length > 0 && (
         <div className="mb-4">
           <div className="relative mb-2">
-            <Search size={16} color="#9A9A9A" className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search size={16} color="var(--color-muted)" className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={search}
@@ -260,7 +260,7 @@ export default function BooksPage() {
                 style={{ background: 'var(--color-surface)' }}
                 aria-label="Clear search"
               >
-                <X size={12} color="#9A9A9A" />
+                <X size={12} color="var(--color-muted)" />
               </button>
             )}
           </div>
@@ -325,8 +325,8 @@ export default function BooksPage() {
                   style={{ background: color + '18', color }}>{catBooks.length}</span>
               </div>
               {expandedCategory === cat
-                ? <ChevronUp size={16} color="#C0B8B0" />
-                : <ChevronDown size={16} color="#C0B8B0" />}
+                ? <ChevronUp size={16} color="var(--color-subtle)" />
+                : <ChevronDown size={16} color="var(--color-subtle)" />}
             </button>
 
             {/* Book rows */}
@@ -342,117 +342,100 @@ export default function BooksPage() {
                     <div key={book.id}>
                       {idx > 0 && <div style={{ height: 1, background: 'var(--color-surface)', margin: '0 12px' }} />}
 
-                      {/* Main row */}
-                      <div className="px-3 pt-3 pb-2">
-                        <div className="flex items-center gap-2.5">
-                          <CategoryIcon category={book.category} size={16} containerSize={34} />
-
-                          {/* Title + meta */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-sm font-bold leading-tight truncate max-w-[160px]">{book.title}</span>
-                              {complete && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0"
-                                  style={{ background: '#d4edda', color: '#155724' }}>Done</span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                              {book.author && (
-                                <span className="text-[11px] truncate max-w-[130px]" style={{ color: 'var(--color-muted)' }}>{book.author}</span>
-                              )}
-                              <span className="text-[10px] px-1.5 py-0.5 rounded font-bold"
-                                style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}>{book.language}</span>
-                            </div>
-                          </div>
-
-                          {/* Progress % */}
-                          <span className="text-sm font-bold flex-shrink-0" style={{ color, minWidth: 36, textAlign: 'right' }}>{pct}%</span>
-
-                          {/* Actions */}
-                          <div className="flex gap-1 flex-shrink-0">
-                            <button onClick={() => isEditing ? setEditingId(null) : startEdit(book)}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center"
-                              style={{ background: isEditing ? color + '20' : '#F5EFE8' }}
-                              aria-label="Edit">
-                              <Pencil size={13} color={isEditing ? color : '#9A9A9A'} />
-                            </button>
-                            <button onClick={() => handleDelete(book.id)}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center"
-                              style={{ background: 'var(--color-surface)' }}
-                              aria-label="Delete">
-                              <Trash2 size={13} color="#C0B8B0" />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Progress bar */}
-                        <div className="mt-2 pl-[46px]">
-                          <ProgressBar percent={pct} color={color} height={5} />
-                          <span className="text-[10px] mt-0.5 block" style={{ color: 'var(--color-subtle)' }}>
-                            p.{cp} / {book.total_pages}
-                          </span>
+                      {/* Top row: Icon + Title */}
+                      <div className="px-3 pt-3 pb-2 flex gap-2.5 items-start">
+                        <CategoryIcon category={book.category} size={16} containerSize={34} />
+                        <div className="flex-1">
+                          <h3 className="text-sm font-bold leading-relaxed" style={{ color: 'var(--color-text)' }}>{book.title}</h3>
+                          {book.author && (
+                            <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-muted)' }}>{book.author}</p>
+                          )}
                         </div>
                       </div>
 
-                      {/* Edit panel */}
-                      {isEditing && (
-                        <div className="mx-3 mb-3 p-3 rounded-xl flex flex-col gap-2"
-                          style={{ background: 'var(--color-bg)', border: `1.5px solid ${color}30` }}>
-                          <input type="text" value={editForm.title}
-                            onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
-                            placeholder="Title *"
-                            className="rounded-lg border-2 px-3 py-2 text-sm font-semibold outline-none"
-                            style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }} />
-                          <input type="text" value={editForm.author}
-                            onChange={(e) => setEditForm((f) => ({ ...f, author: e.target.value }))}
-                            placeholder="Author"
-                            className="rounded-lg border-2 px-3 py-2 text-sm font-semibold outline-none"
-                            style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }} />
-                          <div className="flex gap-2">
-                            <div className="flex-1">
-                              <label className="text-[10px] font-bold block mb-1" style={{ color: 'var(--color-muted)' }}>Total pages</label>
-                              <input type="number" inputMode="numeric" value={editForm.total_pages}
-                                onChange={(e) => setEditForm((f) => ({ ...f, total_pages: e.target.value }))}
-                                className="w-full rounded-lg border-2 px-3 py-2 text-sm font-semibold outline-none"
-                                style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }} />
-                            </div>
-                            <div className="flex-1">
-                              <label className="text-[10px] font-bold block mb-1" style={{ color: 'var(--color-muted)' }}>Current page</label>
-                              <input type="number" inputMode="numeric" value={editForm.current_page}
+                      {/* Divider */}
+                      <div style={{ height: 1, background: 'var(--color-surface)', margin: '8px 12px' }} />
+
+                      {/* Bottom row: Page controls + Actions */}
+                      <div className="px-3 pb-3 flex items-center gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-baseline gap-2">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                inputMode="numeric"
+                                value={editForm.current_page}
                                 onChange={(e) => setEditForm((f) => ({ ...f, current_page: e.target.value }))}
-                                className="w-full rounded-lg border-2 px-3 py-2 text-sm font-semibold outline-none"
-                                style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }} />
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <select value={editForm.category}
-                              onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value as Category }))}
-                              className="flex-1 rounded-lg border-2 px-2 py-2 text-sm font-semibold outline-none"
-                              style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}>
-                              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                            <select value={editForm.language}
-                              onChange={(e) => setEditForm((f) => ({ ...f, language: e.target.value as Language }))}
-                              className="flex-1 rounded-lg border-2 px-2 py-2 text-sm font-semibold outline-none"
-                              style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}>
-                              {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
-                            </select>
-                          </div>
-                          {error && <p className="text-xs font-bold" style={{ color: '#EE4266' }}>{error}</p>}
-                          <div className="flex gap-2">
-                            <button onClick={() => setEditingId(null)}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg font-bold text-sm"
-                              style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}>
-                              <X size={13} /> Cancel
-                            </button>
-                            <button onClick={() => handleSaveEdit(book.id)} disabled={saving}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg font-bold text-sm text-white"
-                              style={{ background: color }}>
-                              <Check size={13} /> {saving ? 'Saving…' : 'Save'}
-                            </button>
+                                max={editForm.total_pages}
+                                className="w-16 px-2 py-1.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                style={{ color: 'var(--color-text)', borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}
+                                autoFocus
+                              />
+                            ) : (
+                              <span className="text-sm font-mono font-bold" style={{ color: 'var(--color-text)' }}>{cp}</span>
+                            )}
+                            <span className="text-xs" style={{ color: 'var(--color-muted)' }}>
+                              of {book.total_pages}
+                            </span>
+                            {complete && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+                                style={{ background: 'var(--success-bg)', color: 'var(--success-fg)' }}>Done</span>
+                            )}
                           </div>
                         </div>
+
+                        {/* Action buttons */}
+                        {isEditing ? (
+                          <div className="flex gap-1.5 flex-shrink-0">
+                            <button
+                              onClick={() => handleSaveEdit(book.id)}
+                              disabled={saving}
+                              className="px-3 py-1.5 rounded-lg text-white hover:opacity-90 transition-opacity flex items-center justify-center"
+                              style={{ background: '#FF6B35' }}
+                              aria-label="Confirm page"
+                            >
+                              <Check size={16} />
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="px-2 py-1.5 rounded-lg hover:opacity-70 transition-opacity flex items-center justify-center"
+                              aria-label="Cancel"
+                            >
+                              <X size={16} color="var(--color-muted)" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-1.5 flex-shrink-0">
+                            <button
+                              onClick={() => startEdit(book)}
+                              className="p-1.5 rounded-lg hover:opacity-70 transition-opacity flex items-center justify-center"
+                              aria-label="Edit page"
+                            >
+                              <Pencil size={16} color="#FF6B35" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(book.id)}
+                              className="p-1.5 rounded-lg hover:opacity-70 text-red-600 transition-opacity flex items-center justify-center"
+                              aria-label="Delete book"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Progress bar */}
+                      {!isEditing && (
+                        <div className="px-3 pb-3">
+                          <ProgressBar percent={pct} color={color} height={5} />
+                        </div>
                       )}
+                      {error && isEditing && (
+                        <div className="px-3 pb-2">
+                          <p className="text-xs font-bold" style={{ color: '#EE4266' }}>{error}</p>
+                        </div>
+                      )}
+
                     </div>
                   )
                 })}
@@ -464,7 +447,7 @@ export default function BooksPage() {
 
       {books.length === 0 && (
         <div className="text-center py-16" style={{ color: 'var(--color-muted)' }}>
-          <BookOpen size={48} color="#F0E8E0" className="mx-auto mb-3" />
+          <BookOpen size={48} color="var(--color-surface)" className="mx-auto mb-3" />
           <p className="font-bold">No books yet!</p>
           <p className="text-sm">Add a book or scan your shelf.</p>
         </div>
@@ -472,7 +455,7 @@ export default function BooksPage() {
 
       {books.length > 0 && filteredBooks.length === 0 && (
         <div className="text-center py-12" style={{ color: 'var(--color-muted)' }}>
-          <Search size={40} color="#F0E8E0" className="mx-auto mb-3" />
+          <Search size={40} color="var(--color-surface)" className="mx-auto mb-3" />
           <p className="font-bold">No matches</p>
           <p className="text-sm mb-3">Try a different search or clear the filters.</p>
           <button

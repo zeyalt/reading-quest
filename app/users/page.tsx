@@ -104,7 +104,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="p-4 tab-content min-h-screen" style={{ background: '#FFF8F0' }}>
+    <div className="p-4 tab-content min-h-screen" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
       <div className="text-center pt-8 pb-6">
         <div className="flex justify-center mb-3">
@@ -116,7 +116,7 @@ export default function UsersPage() {
         >
           Reading Quest
         </h1>
-        <p className="text-sm mt-1 font-bold" style={{ color: '#9A9A9A' }}>
+        <p className="text-sm mt-1 font-bold" style={{ color: 'var(--color-muted)' }}>
           Who&apos;s reading today?
         </p>
       </div>
@@ -136,7 +136,7 @@ export default function UsersPage() {
                   key={u.id}
                   onClick={() => !isEditing && selectUser(u)}
                   className="rounded-2xl p-4 transition-all"
-                  style={{ background: '#FFFFFF', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}
+                  style={{ background: 'var(--color-card)', boxShadow: 'var(--color-shadow)' }}
                 >
                   {isEditing ? (
                     <div className="flex flex-col gap-3">
@@ -146,11 +146,11 @@ export default function UsersPage() {
                         onChange={(e) => setEditName(e.target.value)}
                         placeholder="Name"
                         className="w-full rounded-xl border-2 px-3 py-2 font-semibold outline-none"
-                        style={{ borderColor: '#F0E8E0' }}
+                        style={{ borderColor: 'var(--color-surface)', background: 'var(--color-bg)', color: 'var(--color-text)' }}
                         autoFocus
                       />
                       <div>
-                        <p className="text-xs font-bold mb-2" style={{ color: '#9A9A9A' }}>Avatar</p>
+                        <p className="text-xs font-bold mb-2" style={{ color: 'var(--color-muted)' }}>Avatar</p>
                         <div className="flex flex-wrap gap-2">
                           {AVATAR_OPTIONS.map((e) => (
                             <button
@@ -158,7 +158,7 @@ export default function UsersPage() {
                               onClick={() => setEditEmoji(e)}
                               className="w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all"
                               style={{
-                                background: editEmoji === e ? editColor + '30' : '#F0E8E0',
+                                background: editEmoji === e ? editColor + '30' : 'var(--color-surface)',
                                 border: editEmoji === e ? `2px solid ${editColor}` : '2px solid transparent',
                               }}
                             >
@@ -168,7 +168,7 @@ export default function UsersPage() {
                         </div>
                       </div>
                       <div>
-                        <p className="text-xs font-bold mb-2" style={{ color: '#9A9A9A' }}>Color</p>
+                        <p className="text-xs font-bold mb-2" style={{ color: 'var(--color-muted)' }}>Color</p>
                         <div className="flex gap-2">
                           {AVATAR_COLORS.map((c) => (
                             <button
@@ -189,7 +189,7 @@ export default function UsersPage() {
                         <button
                           onClick={() => setEditingId(null)}
                           className="flex-1 py-2 rounded-lg font-bold flex items-center justify-center gap-1"
-                          style={{ background: '#F0E8E0', color: '#9A9A9A' }}
+                          style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}
                         >
                           <X size={16} /> Cancel
                         </button>
@@ -218,13 +218,13 @@ export default function UsersPage() {
                         >
                           {u.name}
                         </div>
-                        <div className="text-xs" style={{ color: '#9A9A9A' }}>Tap to continue reading</div>
+                        <div className="text-xs" style={{ color: 'var(--color-muted)' }}>Tap to continue reading</div>
                       </div>
                       <div className="flex gap-1 flex-shrink-0">
                         <button
                           onClick={(e) => startEdit(u, e)}
                           className="p-2 rounded-lg"
-                          style={{ color: '#9A9A9A' }}
+                          style={{ color: 'var(--color-muted)' }}
                           aria-label="Edit reader"
                         >
                           <Pencil size={18} />
@@ -232,7 +232,7 @@ export default function UsersPage() {
                         <button
                           onClick={(e) => handleDelete(u.id, e)}
                           className="p-2 rounded-lg"
-                          style={{ color: '#9A9A9A' }}
+                          style={{ color: 'var(--color-muted)' }}
                           aria-label="Remove reader"
                         >
                           <Trash2 size={18} />
@@ -250,7 +250,7 @@ export default function UsersPage() {
             <button
               onClick={() => setShowAdd(true)}
               className="w-full py-4 rounded-2xl font-bold text-lg"
-              style={{ background: '#FFF0E8', color: '#FF6B35', border: '2px dashed #FF6B35' }}
+              style={{ background: 'color-mix(in srgb, #FF6B35 12%, var(--color-card))', color: '#FF6B35', border: '2px dashed #FF6B35' }}
             >
               + Add Reader
             </button>
@@ -260,7 +260,7 @@ export default function UsersPage() {
           {showAdd && (
             <div
               className="rounded-2xl p-4"
-              style={{ background: '#FFFFFF', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}
+              style={{ background: 'var(--color-card)', boxShadow: 'var(--color-shadow)' }}
             >
               <div className="flex items-center gap-2 mb-4">
                 {users.length === 0 && <Hand size={20} style={{ color: '#FF6B35' }} />}
@@ -279,12 +279,12 @@ export default function UsersPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full rounded-xl border-2 px-4 py-3 font-bold text-lg outline-none focus:border-orange-400 mb-4"
-                style={{ borderColor: '#F0E8E0', background: '#FFF8F0' }}
+                style={{ borderColor: 'var(--color-surface)', background: 'var(--color-bg)' }}
                 autoFocus
               />
 
               {/* Emoji picker */}
-              <p className="text-xs font-bold mb-2" style={{ color: '#9A9A9A' }}>Choose avatar</p>
+              <p className="text-xs font-bold mb-2" style={{ color: 'var(--color-muted)' }}>Choose avatar</p>
               <div className="flex flex-wrap gap-2 mb-4">
                 {AVATAR_OPTIONS.map((e) => (
                   <button
@@ -292,7 +292,7 @@ export default function UsersPage() {
                     onClick={() => setEmoji(e)}
                     className="w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all"
                     style={{
-                      background: emoji === e ? color + '30' : '#F0E8E0',
+                      background: emoji === e ? color + '30' : 'var(--color-surface)',
                       border: emoji === e ? `2px solid ${color}` : '2px solid transparent',
                     }}
                   >
@@ -302,7 +302,7 @@ export default function UsersPage() {
               </div>
 
               {/* Color picker */}
-              <p className="text-xs font-bold mb-2" style={{ color: '#9A9A9A' }}>Choose colour</p>
+              <p className="text-xs font-bold mb-2" style={{ color: 'var(--color-muted)' }}>Choose colour</p>
               <div className="flex gap-2 mb-4">
                 {AVATAR_COLORS.map((c) => (
                   <button
@@ -320,7 +320,7 @@ export default function UsersPage() {
               </div>
 
               {/* Preview */}
-              <div className="flex items-center gap-3 p-3 rounded-xl mb-4" style={{ background: '#FFF8F0' }}>
+              <div className="flex items-center gap-3 p-3 rounded-xl mb-4" style={{ background: 'var(--color-bg)' }}>
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold"
                   style={{ background: color + '20', color, border: `2px solid ${color}` }}
@@ -342,7 +342,7 @@ export default function UsersPage() {
                   <button
                     onClick={() => { setShowAdd(false); setError('') }}
                     className="flex-1 py-3 rounded-xl font-bold"
-                    style={{ background: '#F0E8E0', color: '#9A9A9A' }}
+                    style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}
                   >
                     Cancel
                   </button>

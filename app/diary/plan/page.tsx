@@ -96,7 +96,7 @@ export default function ReadingPlanPage() {
           style={{ background: 'var(--color-surface)' }}
           aria-label="Back"
         >
-          <ChevronLeft size={18} color="#9A9A9A" />
+          <ChevronLeft size={18} color="var(--color-muted)" />
         </button>
         <ClipboardList size={24} style={{ color: '#FF6B35' }} />
         <h1 className="text-2xl" style={{ fontFamily: 'var(--font-fredoka), cursive' }}>
@@ -162,8 +162,8 @@ export default function ReadingPlanPage() {
         <div
           className="rounded-xl p-3 text-sm font-bold"
           style={{
-            background: message.kind === 'ok' ? '#d4edda' : '#fde8e8',
-            color: message.kind === 'ok' ? '#155724' : '#c0392b',
+            background: message.kind === 'ok' ? 'var(--success-bg)' : 'var(--error-bg)',
+            color: message.kind === 'ok' ? 'var(--success-fg)' : 'var(--error-fg)',
           }}
         >
           {message.text}
