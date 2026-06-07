@@ -1,12 +1,14 @@
 import { ReadingLog, Book } from './types'
 
-const SGT_OFFSET = 8 * 60 // minutes
-
-export function todaySGT(): string {
+// Today's date (YYYY-MM-DD) in the device's local timezone. We deliberately use
+// the device clock rather than a fixed offset so "Today" always matches the
+// calendar day the user is actually living in, wherever they are.
+export function todayLocal(): string {
   const now = new Date()
-  const offsetMs = (SGT_OFFSET - now.getTimezoneOffset()) * 60000
-  const sgtDate = new Date(now.getTime() + offsetMs)
-  return sgtDate.toISOString().split('T')[0]
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
 
 export function getCurrentPage(bookId: string, logs: ReadingLog[]): number {
@@ -58,15 +60,16 @@ export function getReadingDates(logs: ReadingLog[]): Set<string> {
 export function getStreak(logs: ReadingLog[]): number {
   const readDates = getReadingDates(logs)
   let streak = 0
-  const check = new Date()
-  const utc = check.getTime() + check.getTimezoneOffset() * 60000
-  const sgtNow = new Date(utc + SGT_OFFSET * 60000)
+  const cursor = new Date() // local device time
 
   while (true) {
-    const dateStr = sgtNow.toISOString().split('T')[0]
+    const y = cursor.getFullYear()
+    const m = String(cursor.getMonth() + 1).padStart(2, '0')
+    const d = String(cursor.getDate()).padStart(2, '0')
+    const dateStr = `${y}-${m}-${d}`
     if (readDates.has(dateStr)) {
       streak++
-      sgtNow.setDate(sgtNow.getDate() - 1)
+      cursor.setDate(cursor.getDate() - 1)
     } else {
       break
     }
@@ -78,12 +81,9 @@ export function isComplete(book: Book, logs: ReadingLog[]): boolean {
   return getCurrentPage(book.id, logs) >= book.total_pages
 }
 
-// Returns 0=Mon ... 6=Sun for today in SGT
+// Returns 0=Mon ... 6=Sun for today in the device's local timezone.
 export function todayDayOfWeek(): number {
-  const now = new Date()
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000
-  const sgt = new Date(utc + SGT_OFFSET * 60000)
-  const jsDay = sgt.getDay() // 0=Sun, 1=Mon...
+  const jsDay = new Date().getDay() // 0=Sun, 1=Mon... (local)
   return jsDay === 0 ? 6 : jsDay - 1
 }
 

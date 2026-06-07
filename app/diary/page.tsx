@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Book, ReadingLog, ReadingPlan, DAY_NAMES, LANGUAGE_FLAGS, Language } from '@/lib/types'
-import { todaySGT, getPagesReadOnDate } from '@/lib/utils'
+import { todayLocal, getPagesReadOnDate } from '@/lib/utils'
 import { useUser } from '@/components/UserContext'
 import DateLogPanel from '@/components/DateLogPanel'
 import CategoryIcon from '@/components/CategoryIcon'
@@ -45,7 +45,7 @@ function DiaryContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useUser()
-  const today = todaySGT()
+  const today = todayLocal()
 
   // Currently viewed date. Driven by ?d=YYYY-MM-DD; falls back to today.
   const queryDate = searchParams.get('d')
@@ -136,7 +136,19 @@ function DiaryContent() {
           <ChevronLeft size={18} color="var(--color-muted)" />
         </button>
 
-        <div className="flex-1 flex flex-col items-center">
+        {/* Tapping anywhere on the date opens the calendar. The native date
+            input is laid over the text at full size but fully transparent, so
+            no browser chevron/indicator shows — the text itself is the trigger. */}
+        <div className="flex-1 flex flex-col items-center relative">
+          <span
+            className="text-center font-bold"
+            style={{ color: isToday ? accent : isFuture ? 'var(--color-muted)' : 'var(--color-text)' }}
+          >
+            {dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })}
+          </span>
+          <span className="text-[10px] font-bold" style={{ color: 'var(--color-muted)' }}>
+            {isToday ? 'TODAY' : isPast ? 'PAST' : 'COMING UP'}
+          </span>
           <input
             type="date"
             value={activeDate}
@@ -144,13 +156,9 @@ function DiaryContent() {
               if (e.target.value) setDate(e.target.value)
             }}
             onClick={(e) => e.currentTarget.showPicker?.()}
-            className="date-trigger bg-transparent text-center font-bold outline-none cursor-pointer"
-            style={{ color: isToday ? accent : isFuture ? 'var(--color-muted)' : 'var(--color-text)' }}
+            className="date-trigger absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             aria-label="Pick a date"
           />
-          <span className="text-[10px] font-bold" style={{ color: 'var(--color-muted)' }}>
-            {isToday ? 'TODAY' : isPast ? 'PAST' : 'COMING UP'}
-          </span>
         </div>
 
         <button

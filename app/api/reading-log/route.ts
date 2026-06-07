@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
-import { todaySGT } from '@/lib/utils'
+import { todayLocal } from '@/lib/utils'
 
 export async function GET(req: NextRequest) {
   const supabase = createServiceClient()
@@ -36,7 +36,9 @@ export async function POST(req: NextRequest) {
 
   if (!user_id) return NextResponse.json({ error: 'user_id required' }, { status: 400 })
 
-  const logDate = date ?? todaySGT()
+  // Clients always send `date` (computed from the device clock); this is just a
+  // safety fallback for direct API calls without one.
+  const logDate = date ?? todayLocal()
 
   const { data, error } = await supabase
     .from('reading_log')

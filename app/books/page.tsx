@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Pencil, Trash2, Plus, Check, X, Camera, ChevronDown, ChevronUp, BookOpen, Search } from 'lucide-react'
+import { Pencil, Trash2, Plus, Check, X, Camera, BookOpen, Search } from 'lucide-react'
 import { Book, ReadingLog, CATEGORIES, CATEGORY_COLORS, LANGUAGES, Category, Language } from '@/lib/types'
 import { useUser } from '@/components/UserContext'
-import CategoryIcon from '@/components/CategoryIcon'
 import ProgressBar from '@/components/ProgressBar'
-import { getCurrentPage, progressPercent, todaySGT } from '@/lib/utils'
+import { getCurrentPage, progressPercent, todayLocal } from '@/lib/utils'
 
 type BookForm = {
   title: string
@@ -28,6 +27,17 @@ const emptyForm = (): BookForm => ({
 type PagesBucket = 'Any' | 'Under 50' | '50–100' | '100–200' | '200–500' | '500+'
 
 const PAGES_BUCKETS: PagesBucket[] = ['Any', 'Under 50', '50–100', '100–200', '200–500', '500+']
+
+type SortKey = 'recent' | 'title' | 'progress' | 'pages'
+
+const SORT_KEYS: SortKey[] = ['recent', 'title', 'progress', 'pages']
+
+const SORT_LABELS: Record<SortKey, string> = {
+  recent: 'Recently added',
+  title: 'Title A–Z',
+  progress: 'Most progress',
+  pages: 'Most pages',
+}
 
 function matchesPagesBucket(pages: number, bucket: PagesBucket): boolean {
   switch (bucket) {
@@ -51,12 +61,12 @@ export default function BooksPage() {
   const [editForm, setEditForm] = useState<BookForm & { current_page: string }>({ ...emptyForm(), current_page: '0' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [expandedCategory, setExpandedCategory] = useState<Category | null>(null)
 
   // Filters
   const [search, setSearch] = useState('')
   const [genreFilter, setGenreFilter] = useState<Category | 'All'>('All')
   const [pagesFilter, setPagesFilter] = useState<PagesBucket>('Any')
+  const [sortBy, setSortBy] = useState<SortKey>('recent')
   const filtersActive = search.trim() !== '' || genreFilter !== 'All' || pagesFilter !== 'Any'
   function clearFilters() {
     setSearch('')
@@ -134,9 +144,9 @@ export default function BooksPage() {
     await fetch('/api/reading-log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: user!.id, book_id: bookId, current_page: currentPage, date: todaySGT() }),
+      body: JSON.stringify({ user_id: user!.id, book_id: bookId, current_page: currentPage, date: todayLocal() }),
     })
-    const today = todaySGT()
+    const today = todayLocal()
     setLogs((prev) => {
       const filtered = prev.filter((l) => !(l.book_id === bookId && l.date === today))
       return [...filtered, { id: 'tmp', user_id: user!.id, book_id: bookId, date: today, current_page: currentPage, logged_at: new Date().toISOString() }]
@@ -158,10 +168,24 @@ export default function BooksPage() {
     return true
   })
 
-  const grouped = CATEGORIES.reduce<Record<Category, Book[]>>(
-    (acc, cat) => { acc[cat] = filteredBooks.filter((b) => b.category === cat); return acc },
-    {} as Record<Category, Book[]>,
-  )
+  // One flat, sorted list. Genre is shown as a chip on each row instead of
+  // grouping the library into per-genre sections.
+  const sortedBooks = [...filteredBooks].sort((a, b) => {
+    switch (sortBy) {
+      case 'title':
+        return a.title.localeCompare(b.title)
+      case 'progress': {
+        const pa = progressPercent(getCurrentPage(a.id, logs), a.total_pages)
+        const pb = progressPercent(getCurrentPage(b.id, logs), b.total_pages)
+        return pb - pa
+      }
+      case 'pages':
+        return b.total_pages - a.total_pages
+      case 'recent':
+      default:
+        return b.created_at.localeCompare(a.created_at)
+    }
+  })
 
   if (!user || loading) {
     return (
@@ -287,6 +311,17 @@ export default function BooksPage() {
               ))}
             </select>
           </div>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortKey)}
+            className="w-full mt-2 rounded-xl border-2 px-3 py-2 font-semibold text-sm outline-none"
+            style={{ borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}
+            aria-label="Sort books"
+          >
+            {SORT_KEYS.map((k) => (
+              <option key={k} value={k}>Sort: {SORT_LABELS[k]}</option>
+            ))}
+          </select>
           {filtersActive && (
             <div className="flex items-center justify-between mt-2 px-1">
               <span className="text-xs font-bold" style={{ color: 'var(--color-muted)' }}>
@@ -304,146 +339,115 @@ export default function BooksPage() {
         </div>
       )}
 
-      {/* Books grouped by category */}
-      {CATEGORIES.map((cat) => {
-        const catBooks = grouped[cat]
-        if (catBooks.length === 0) return null
-        const color = CATEGORY_COLORS[cat]
-        const isOpen = expandedCategory === cat || expandedCategory === null
+      {/* Flat book list — genre shown as a chip on each row */}
+      {sortedBooks.length > 0 && (
+        <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-card)', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
+          {sortedBooks.map((book, idx) => {
+            const cp = getCurrentPage(book.id, logs)
+            const pct = progressPercent(cp, book.total_pages)
+            const complete = cp >= book.total_pages
+            const isEditing = editingId === book.id
+            const color = CATEGORY_COLORS[book.category]
 
-        return (
-          <div key={cat} className="mb-3">
-            {/* Category header */}
-            <button
-              className="w-full flex items-center justify-between px-1 py-1.5 mb-1"
-              onClick={() => setExpandedCategory(expandedCategory === cat ? null : cat)}
-            >
-              <div className="flex items-center gap-2">
-                <CategoryIcon category={cat} size={14} containerSize={26} />
-                <span className="text-sm font-bold" style={{ color }}>{cat}</span>
-                <span className="text-xs px-1.5 py-0.5 rounded-full font-bold"
-                  style={{ background: color + '18', color }}>{catBooks.length}</span>
-              </div>
-              {expandedCategory === cat
-                ? <ChevronUp size={16} color="var(--color-subtle)" />
-                : <ChevronDown size={16} color="var(--color-subtle)" />}
-            </button>
+            return (
+              <div key={book.id}>
+                {idx > 0 && <div style={{ height: 1, background: 'var(--color-surface)', margin: '0 12px' }} />}
 
-            {/* Book rows */}
-            {(expandedCategory === null || expandedCategory === cat) && (
-              <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-card)', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
-                {catBooks.map((book, idx) => {
-                  const cp = getCurrentPage(book.id, logs)
-                  const pct = progressPercent(cp, book.total_pages)
-                  const complete = cp >= book.total_pages
-                  const isEditing = editingId === book.id
-
-                  return (
-                    <div key={book.id}>
-                      {idx > 0 && <div style={{ height: 1, background: 'var(--color-surface)', margin: '0 12px' }} />}
-
-                      {/* Top row: Icon + Title */}
-                      <div className="px-3 pt-3 pb-2 flex gap-2.5 items-start">
-                        <CategoryIcon category={book.category} size={16} containerSize={34} />
-                        <div className="flex-1">
-                          <h3 className="text-sm font-bold leading-relaxed" style={{ color: 'var(--color-text)' }}>{book.title}</h3>
-                          {book.author && (
-                            <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-muted)' }}>{book.author}</p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Divider */}
-                      <div style={{ height: 1, background: 'var(--color-surface)', margin: '8px 12px' }} />
-
-                      {/* Bottom row: Page controls + Actions */}
-                      <div className="px-3 pb-3 flex items-center gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-baseline gap-2">
-                            {isEditing ? (
-                              <input
-                                type="number"
-                                inputMode="numeric"
-                                value={editForm.current_page}
-                                onChange={(e) => setEditForm((f) => ({ ...f, current_page: e.target.value }))}
-                                max={editForm.total_pages}
-                                className="w-16 px-2 py-1.5 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                style={{ color: 'var(--color-text)', borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}
-                                autoFocus
-                              />
-                            ) : (
-                              <span className="text-sm font-mono font-bold" style={{ color: 'var(--color-text)' }}>{cp}</span>
-                            )}
-                            <span className="text-xs" style={{ color: 'var(--color-muted)' }}>
-                              of {book.total_pages}
-                            </span>
-                            {complete && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
-                                style={{ background: 'var(--success-bg)', color: 'var(--success-fg)' }}>Done</span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Action buttons */}
-                        {isEditing ? (
-                          <div className="flex gap-1.5 flex-shrink-0">
-                            <button
-                              onClick={() => handleSaveEdit(book.id)}
-                              disabled={saving}
-                              className="px-3 py-1.5 rounded-lg text-white hover:opacity-90 transition-opacity flex items-center justify-center"
-                              style={{ background: '#FF6B35' }}
-                              aria-label="Confirm page"
-                            >
-                              <Check size={16} />
-                            </button>
-                            <button
-                              onClick={() => setEditingId(null)}
-                              className="px-2 py-1.5 rounded-lg hover:opacity-70 transition-opacity flex items-center justify-center"
-                              aria-label="Cancel"
-                            >
-                              <X size={16} color="var(--color-muted)" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex gap-1.5 flex-shrink-0">
-                            <button
-                              onClick={() => startEdit(book)}
-                              className="p-1.5 rounded-lg hover:opacity-70 transition-opacity flex items-center justify-center"
-                              aria-label="Edit page"
-                            >
-                              <Pencil size={16} color="#FF6B35" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(book.id)}
-                              className="p-1.5 rounded-lg hover:opacity-70 text-red-600 transition-opacity flex items-center justify-center"
-                              aria-label="Delete book"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
+                <div className="px-3 py-2.5">
+                  {/* Row 1: title + genre chip + author + actions */}
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-bold leading-snug" style={{ color: 'var(--color-text)' }}>{book.title}</h3>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: color + '1A', color }}>
+                          {book.category}
+                        </span>
+                        {book.author && (
+                          <span className="text-[11px]" style={{ color: 'var(--color-muted)' }}>{book.author}</span>
                         )}
                       </div>
-
-                      {/* Progress bar */}
-                      {!isEditing && (
-                        <div className="px-3 pb-3">
-                          <ProgressBar percent={pct} color={color} height={5} />
-                        </div>
-                      )}
-                      {error && isEditing && (
-                        <div className="px-3 pb-2">
-                          <p className="text-xs font-bold" style={{ color: '#EE4266' }}>{error}</p>
-                        </div>
-                      )}
-
                     </div>
-                  )
-                })}
+
+                    {isEditing ? (
+                      <div className="flex gap-1.5 flex-shrink-0">
+                        <button
+                          onClick={() => handleSaveEdit(book.id)}
+                          disabled={saving}
+                          className="px-3 py-1.5 rounded-lg text-white hover:opacity-90 transition-opacity flex items-center justify-center"
+                          style={{ background: '#FF6B35' }}
+                          aria-label="Confirm page"
+                        >
+                          <Check size={16} />
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="px-2 py-1.5 rounded-lg hover:opacity-70 transition-opacity flex items-center justify-center"
+                          aria-label="Cancel"
+                        >
+                          <X size={16} color="var(--color-muted)" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => startEdit(book)}
+                          className="p-1.5 rounded-lg hover:opacity-70 transition-opacity flex items-center justify-center"
+                          aria-label="Edit page"
+                        >
+                          <Pencil size={15} color="#FF6B35" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(book.id)}
+                          className="p-1.5 rounded-lg hover:opacity-70 text-red-600 transition-opacity flex items-center justify-center"
+                          aria-label="Delete book"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Row 2: page count + inline progress */}
+                  {isEditing ? (
+                    <div className="flex items-center gap-2 mt-2">
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={editForm.current_page}
+                        onChange={(e) => setEditForm((f) => ({ ...f, current_page: e.target.value }))}
+                        max={editForm.total_pages}
+                        className="w-16 px-2 py-1 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        style={{ color: 'var(--color-text)', borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}
+                        autoFocus
+                      />
+                      <span className="text-xs" style={{ color: 'var(--color-muted)' }}>of {book.total_pages}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-xs font-mono font-bold flex-shrink-0" style={{ color: 'var(--color-text)' }}>
+                        {cp}<span className="font-normal" style={{ color: 'var(--color-muted)' }}> / {book.total_pages}</span>
+                      </span>
+                      <div className="flex-1">
+                        <ProgressBar percent={pct} color={color} height={5} />
+                      </div>
+                      {complete ? (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0"
+                          style={{ background: 'var(--success-bg)', color: 'var(--success-fg)' }}>Done</span>
+                      ) : (
+                        <span className="text-[10px] font-bold flex-shrink-0" style={{ color: 'var(--color-muted)' }}>{pct}%</span>
+                      )}
+                    </div>
+                  )}
+
+                  {error && isEditing && (
+                    <p className="text-xs font-bold mt-1.5" style={{ color: '#EE4266' }}>{error}</p>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        )
-      })}
+            )
+          })}
+        </div>
+      )}
 
       {books.length === 0 && (
         <div className="text-center py-16" style={{ color: 'var(--color-muted)' }}>

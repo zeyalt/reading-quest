@@ -38,6 +38,7 @@ export interface ReadingPlan {
 export type Category =
   | 'Mystery'
   | 'Fiction'
+  | 'Non-Fiction'
   | 'Comic'
   | 'Singapore'
   | 'Science'
@@ -54,6 +55,7 @@ export type Language =
 export const CATEGORIES: Category[] = [
   'Mystery',
   'Fiction',
+  'Non-Fiction',
   'Comic',
   'Singapore',
   'Science',
@@ -72,6 +74,7 @@ export const LANGUAGES: Language[] = [
 export const CATEGORY_COLORS: Record<Category, string> = {
   Mystery: '#4A90D9',
   Fiction: '#00C9A7',
+  'Non-Fiction': '#5C6BC0',
   Comic: '#FF6B35',
   Singapore: '#EE4266',
   Science: '#2EC4B6',

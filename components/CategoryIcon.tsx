@@ -1,6 +1,7 @@
 import {
   Search,
   BookOpen,
+  GraduationCap,
   Zap,
   MapPin,
   FlaskConical,
@@ -12,6 +13,7 @@ import { Category, CATEGORY_COLORS } from '@/lib/types'
 const ICONS: Record<Category, React.ComponentType<{ size?: number; strokeWidth?: number; color?: string }>> = {
   Mystery: Search,
   Fiction: BookOpen,
+  'Non-Fiction': GraduationCap,
   Comic: Zap,
   Singapore: MapPin,
   Science: FlaskConical,

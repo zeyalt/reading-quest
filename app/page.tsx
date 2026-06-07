@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Book, ReadingLog, ReadingPlan, Language, LANGUAGE_FLAGS, DAY_NAMES } from '@/lib/types'
 import {
-  todaySGT,
+  todayLocal,
   todayDayOfWeek,
   getPagesReadOnDate,
   getReadingDates,
@@ -28,7 +28,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [calMonthOffset, setCalMonthOffset] = useState(0)
 
-  const today = todaySGT()
+  const today = todayLocal()
   const todayDow = todayDayOfWeek()
 
   const load = useCallback(async () => {
@@ -109,12 +109,10 @@ export default function Dashboard() {
 
   // Streak calendar: every day in the calendar month (with navigation via calMonthOffset)
   const calendar = useMemo(() => {
-    const now = new Date()
-    const utc = now.getTime() + now.getTimezoneOffset() * 60000
-    const sgt = new Date(utc + 8 * 60 * 60000)
-    sgt.setMonth(sgt.getMonth() + calMonthOffset)
-    const year = sgt.getFullYear()
-    const month = sgt.getMonth()
+    const cursor = new Date() // local device time
+    cursor.setMonth(cursor.getMonth() + calMonthOffset)
+    const year = cursor.getFullYear()
+    const month = cursor.getMonth()
     const daysInMonth = new Date(year, month + 1, 0).getDate()
     // Green a day only if pages actually advanced (matches the Past-7 list),
     // not merely because a log row exists for that date.
@@ -127,7 +125,7 @@ export default function Dashboard() {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
       cells.push({ date: dateStr, read: readDates.has(dateStr), today: dateStr === today, empty: false })
     }
-    return { cells, monthLabel: sgt.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) }
+    return { cells, monthLabel: cursor.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) }
   }, [today, logs, calMonthOffset])
 
   // Largest single-day page total ever (for the "20 pages in a day" milestone).

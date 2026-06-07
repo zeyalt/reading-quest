@@ -41,9 +41,16 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${nunito.variable} ${fredoka.variable}`}>
+    <html lang="en" className={`${nunito.variable} ${fredoka.variable}`} suppressHydrationWarning>
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        {/* Set the saved theme before React hydrates so there's no flash of the
+            wrong theme and no hydration mismatch on the <html> data-theme attr. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('rq_theme')||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
+          }}
+        />
       </head>
       <body className="min-h-screen" style={{ fontFamily: 'var(--font-nunito), sans-serif' }}>
         <ThemeProvider>
