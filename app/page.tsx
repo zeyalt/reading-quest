@@ -73,8 +73,8 @@ export default function Dashboard() {
   const hitTodayTarget = !!todayTarget && todayPagesTotal >= todayTarget.pages
 
 
-  // Past 7 days: the seven days BEFORE today (today shown separately above).
-  // Each entry tells the diary widget what target was, what was logged.
+  // Past 7 days: a rolling 7-day window ending today (index 0 = today, then
+  // back 6 days). Each entry tells the diary widget the target and what was logged.
   const past7 = useMemo(() => {
     const t = new Date(today + 'T00:00:00Z')
     const planByDow = new Map<number, ReadingPlan>()
@@ -82,7 +82,7 @@ export default function Dashboard() {
 
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(t)
-      d.setUTCDate(t.getUTCDate() - (i + 1)) // -1, -2, ..., -7
+      d.setUTCDate(t.getUTCDate() - i) // 0 (today), -1, ..., -6
       const dateStr = d.toISOString().split('T')[0]
       const jsDay = d.getUTCDay()
       const dow = jsDay === 0 ? 6 : jsDay - 1
@@ -268,7 +268,7 @@ export default function Dashboard() {
           <WeekChart
             data={[...past7].reverse().map((d) => d.totalDelta)}
             labels={[...past7].reverse().map((d) => d.dayLabel)}
-            highlightIdx={-1}
+            highlightIdx={past7.length - 1}
           />
         </div>
 
