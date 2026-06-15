@@ -58,7 +58,9 @@ export default function BooksPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<BookForm>(emptyForm())
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState<BookForm & { current_page: string }>({ ...emptyForm(), current_page: '0' })
+  // Inline editing only changes the current page; the book's other fields aren't
+  // editable here, so we just track the page being entered.
+  const [editPage, setEditPage] = useState<string>('0')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -115,37 +117,25 @@ export default function BooksPage() {
   }
 
   function startEdit(book: Book) {
-    const cp = getCurrentPage(book.id, logs)
     setEditingId(book.id)
-    setEditForm({ title: book.title, author: book.author ?? '', total_pages: String(book.total_pages), category: book.category, language: book.language, current_page: String(cp) })
+    setEditPage(String(getCurrentPage(book.id, logs)))
     setError('')
   }
 
   async function handleSaveEdit(bookId: string) {
-    if (!editForm.title.trim() || !editForm.total_pages) { setError('Title and page count are required.'); return }
+    const book = books.find((b) => b.id === bookId)
+    if (!book) return
     setSaving(true)
     setError('')
-    const totalPages = parseInt(editForm.total_pages)
-    const currentPage = Math.min(Math.max(0, parseInt(editForm.current_page) || 0), totalPages)
+    const currentPage = Math.min(Math.max(0, parseInt(editPage) || 0), book.total_pages)
 
-    const res = await fetch(`/api/books/${bookId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: editForm.title.trim(), author: editForm.author.trim() || null,
-        total_pages: totalPages, category: editForm.category,
-        language: editForm.language, cover_color: CATEGORY_COLORS[editForm.category],
-      }),
-    })
-    if (!res.ok) { setError('Failed to update book.'); setSaving(false); return }
-    const updated = await res.json()
-    setBooks((prev) => prev.map((b) => (b.id === bookId ? updated : b)))
-
-    await fetch('/api/reading-log', {
+    const res = await fetch('/api/reading-log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: user!.id, book_id: bookId, current_page: currentPage, date: todayLocal() }),
     })
+    if (!res.ok) { setError('Failed to update page.'); setSaving(false); return }
+
     const today = todayLocal()
     setLogs((prev) => {
       const filtered = prev.filter((l) => !(l.book_id === bookId && l.date === today))
@@ -413,9 +403,9 @@ export default function BooksPage() {
                       <input
                         type="number"
                         inputMode="numeric"
-                        value={editForm.current_page}
-                        onChange={(e) => setEditForm((f) => ({ ...f, current_page: e.target.value }))}
-                        max={editForm.total_pages}
+                        value={editPage}
+                        onChange={(e) => setEditPage(e.target.value)}
+                        max={book.total_pages}
                         className="w-16 px-2 py-1 rounded-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                         style={{ color: 'var(--color-text)', borderColor: 'var(--color-surface)', background: 'var(--color-card)' }}
                         autoFocus

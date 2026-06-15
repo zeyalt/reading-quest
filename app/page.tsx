@@ -98,7 +98,6 @@ export default function Dashboard() {
         date: dateStr,
         dayLabel: DAY_NAMES[dow],
         dayOfMonth: d.getUTCDate(),
-        monthShort: d.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }),
         target,
         items,
         totalDelta,
