@@ -178,7 +178,7 @@ export default function DateLogPanel({ userId, date, books, logs, onChanged }: P
               onClick={handleAdd}
               disabled={!addBookId || !addPage || busy === addBookId}
               className="flex items-center gap-1 px-3 py-2 rounded-lg font-bold text-sm text-white disabled:opacity-50"
-              style={{ background: '#FF6B35' }}
+              style={{ background: 'var(--color-primary)' }}
             >
               {busy === addBookId ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
               Log
@@ -242,19 +242,19 @@ function ExistingLogRow({
           className="w-16 rounded-lg border-2 px-2 py-1 font-bold text-sm text-center outline-none"
           style={{
             color: 'var(--color-text)',
-            borderColor: dirty ? '#FF6B35' : 'var(--color-surface)',
+            borderColor: dirty ? 'var(--color-primary)' : 'var(--color-surface)',
             background: dirty ? 'var(--color-bg)' : 'var(--color-card)',
           }}
         />
         {busy ? (
-          <Loader2 size={14} className="animate-spin" style={{ color: '#FF6B35' }} />
+          <Loader2 size={14} className="animate-spin" style={{ color: 'var(--color-primary)' }} />
         ) : (
           <button
             onClick={commit}
             disabled={!dirty}
             className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
             style={{
-              background: dirty ? '#FF6B35' : 'var(--color-surface)',
+              background: dirty ? 'var(--color-primary)' : 'var(--color-surface)',
               opacity: dirty ? 1 : 0.4,
             }}
             aria-label="Confirm page number"

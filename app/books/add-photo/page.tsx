@@ -198,24 +198,35 @@ export default function AddPhotoPage() {
   if (step === 'success') {
     return (
       <div className="p-4 tab-content flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="flex justify-center mb-4">
-          <Sparkles size={56} style={{ color: '#FF6B35' }} />
+        <div className="flex justify-center mb-5">
+          <span
+            className="flex items-center justify-center pop"
+            style={{
+              width: 72, height: 72, borderRadius: 22,
+              background: 'var(--candy-sun)',
+              border: '2.5px solid var(--ink)',
+              boxShadow: '4px 5px 0 0 var(--ink)',
+              color: 'var(--candy-sun-ink)',
+            }}
+          >
+            <Sparkles size={38} />
+          </span>
         </div>
-        <h1 className="text-2xl font-bold mb-2" style={{ fontFamily: 'var(--font-fredoka), cursive' }}>
+        <h1 className="text-2xl mb-2">
           {addedCount} Book{addedCount !== 1 ? 's' : ''} Added!
         </h1>
         <div className="flex gap-3 mt-6">
           <button
             onClick={() => { setStep('capture'); setDetected([]); setPreview(null) }}
-            className="px-5 py-3 rounded-xl font-bold"
-            style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}
+            className="sticker-sm sticker-press px-5 py-3 font-extrabold"
+            style={{ background: 'var(--color-surface)', color: 'var(--color-text)' }}
           >
             Add More
           </button>
           <button
             onClick={() => router.push('/books')}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-white"
-            style={{ background: '#FF6B35' }}
+            className="sticker-sm sticker-press flex items-center gap-2 px-5 py-3 font-extrabold text-white"
+            style={{ background: 'var(--candy-teal)' }}
           >
             <BookOpen size={16} />
             Go to Library
@@ -228,27 +239,34 @@ export default function AddPhotoPage() {
   return (
     <div className="p-4 tab-content">
       <div className="flex items-center gap-3 mb-4">
-        <button onClick={() => router.back()} className="p-2 rounded-xl" style={{ background: 'var(--color-surface)' }} aria-label="Go back">
-          <ChevronLeft size={20} style={{ color: 'var(--color-muted)' }} />
+        <button onClick={() => router.back()} className="sticker-press p-2 rounded-xl" style={{ background: 'var(--color-surface)', border: '2px solid var(--ink)', boxShadow: '2px 2px 0 0 var(--ink)' }} aria-label="Go back">
+          <ChevronLeft size={20} style={{ color: 'var(--color-text)' }} />
         </button>
-        <Camera size={24} style={{ color: '#FF6B35' }} />
-        <h1 className="text-2xl" style={{ fontFamily: 'var(--font-fredoka), cursive' }}>
-          Scan Books
-        </h1>
+        <span className="flex items-center justify-center rounded-xl" style={{ width: 34, height: 34, background: 'var(--candy-sky)', border: '2px solid var(--ink)', boxShadow: '2px 2px 0 0 var(--ink)', color: '#fff' }}>
+          <Camera size={19} />
+        </span>
+        <h1 className="text-2xl">Scan Books</h1>
       </div>
 
       {step === 'capture' && (
         <div className="flex flex-col gap-4">
           <div
-            className="rounded-2xl p-8 flex flex-col items-center gap-4 cursor-pointer"
-            style={{ background: 'var(--color-bg)', border: '2px dashed #FF6B35' }}
+            className="sticker-press pop p-8 flex flex-col items-center gap-4 cursor-pointer"
+            style={{
+              ['--i' as string]: 0,
+              background: 'color-mix(in srgb, var(--candy-sky) 10%, var(--color-card))',
+              border: '2.5px dashed var(--candy-sky)',
+              borderRadius: 'var(--sticker-radius)',
+            }}
             onClick={() => fileRef.current?.click()}
           >
-            <Camera size={48} style={{ color: '#FF6B35' }} />
-            <p className="font-bold text-center" style={{ color: '#FF6B35' }}>
+            <span className="flex items-center justify-center rounded-full" style={{ width: 64, height: 64, background: 'var(--candy-sky)', border: '2.5px solid var(--ink)', boxShadow: '3px 3px 0 0 var(--ink)', color: '#fff' }}>
+              <Camera size={32} />
+            </span>
+            <p className="font-extrabold text-center" style={{ color: 'var(--candy-sky-ink)' }}>
               Take a photo of your bookshelf
             </p>
-            <p className="text-sm text-center" style={{ color: 'var(--color-muted)' }}>
+            <p className="text-sm text-center font-bold" style={{ color: 'var(--color-muted)' }}>
               Point the camera at book spines for best results
             </p>
           </div>
@@ -267,8 +285,8 @@ export default function AddPhotoPage() {
                 fileRef.current.click()
               }
             }}
-            className="py-3 rounded-xl font-bold"
-            style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}
+            className="sticker-sm sticker-press py-3 font-extrabold"
+            style={{ background: 'var(--color-surface)', color: 'var(--color-text)' }}
           >
             Choose from gallery
           </button>
@@ -286,15 +304,15 @@ export default function AddPhotoPage() {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={preview} alt="Shelf" className="w-full rounded-2xl max-h-48 object-cover mb-4" />
           )}
-          <Search size={40} style={{ color: '#FF6B35' }} />
-          <p className="font-bold text-lg text-center">Identifying books...</p>
+          <Search size={40} style={{ color: 'var(--candy-sky)' }} />
+          <p className="font-extrabold text-lg text-center">Identifying books...</p>
           <div className="flex gap-2">
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
                 className="w-3 h-3 rounded-full"
                 style={{
-                  background: '#FF6B35',
+                  background: 'var(--candy-sky)',
                   animation: `shimmer 1s ${i * 0.2}s infinite`,
                   opacity: 0.6,
                 }}
@@ -316,10 +334,9 @@ export default function AddPhotoPage() {
           {detected.map((book, idx) => (
             <div
               key={idx}
-              className="rounded-2xl p-4 mb-3"
+              className="sticker p-4 mb-3"
               style={{
-                background: book.duplicate ? 'var(--color-bg)' : 'var(--color-card)',
-                boxShadow: 'var(--color-shadow)',
+                background: book.duplicate ? 'var(--color-surface)' : 'var(--color-card)',
                 opacity: book.include ? 1 : 0.6,
               }}
             >
@@ -332,7 +349,7 @@ export default function AddPhotoPage() {
                   disabled={book.duplicate}
                 />
                 {book.duplicate && (
-                  <span className="text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1" style={{ background: '#FFD93D20', color: '#B8860B' }}>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-extrabold flex items-center gap-1" style={{ background: 'color-mix(in srgb, var(--candy-sun) 26%, transparent)', color: 'var(--candy-sun-ink)' }}>
                     <AlertCircle size={12} />
                     Already in library
                   </span>
@@ -363,7 +380,7 @@ export default function AddPhotoPage() {
                     onChange={(e) => updateDetected(idx, { total_pages: parseInt(e.target.value) || '' })}
                     placeholder={book.pagesLoading ? 'Looking up...' : 'Pages *'}
                     className="flex-1 rounded-xl border-2 px-3 py-2 font-semibold text-sm outline-none"
-                    style={{ borderColor: book.total_pages === '' && !book.pagesLoading ? '#EE4266' : 'var(--color-surface)' }}
+                    style={{ borderColor: book.total_pages === '' && !book.pagesLoading ? 'var(--error-fg)' : 'var(--color-surface)' }}
                   />
                   <select
                     value={book.category}
@@ -395,8 +412,8 @@ export default function AddPhotoPage() {
           <button
             onClick={handleAddSelected}
             disabled={saving}
-            className="w-full py-4 rounded-xl font-bold text-white text-lg"
-            style={{ background: '#FF6B35', boxShadow: '0 2px 12px #FF6B3560' }}
+            className="sticker sticker-press w-full py-4 font-extrabold text-white text-lg"
+            style={{ background: 'var(--candy-teal)' }}
           >
             {saving ? 'Adding...' : `Add Selected Books ✓`}
           </button>

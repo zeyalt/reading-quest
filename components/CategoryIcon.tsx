@@ -29,7 +29,7 @@ interface Props {
 
 export default function CategoryIcon({ category, size = 18, containerSize = 40 }: Props) {
   const Icon = ICONS[category]
-  const color = CATEGORY_COLORS[category] ?? '#FF6B35'
+  const color = CATEGORY_COLORS[category] ?? 'var(--color-primary)'
 
   return (
     <div

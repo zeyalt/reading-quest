@@ -33,7 +33,7 @@ export default function DiaryPage() {
 
 function DiaryLoading() {
   return (
-    <div className="p-4 pt-12">
+    <div className="p-4">
       <div className="skeleton h-8 w-48 mb-4" />
       <div className="skeleton h-16 w-full mb-4 rounded-2xl" />
       <div className="skeleton h-48 w-full rounded-2xl" />
@@ -109,31 +109,30 @@ function DiaryContent() {
   const accent = user.avatar_color
 
   return (
-    <div className="p-4 pt-12 tab-content">
+    <div className="p-4 tab-content">
       {/* Title row */}
-      <div className="flex items-center gap-2">
-        <BookOpen size={28} style={{ color: '#FF6B35' }} />
-        <h1 className="text-2xl" style={{ fontFamily: 'var(--font-fredoka), cursive' }}>
-          {user.name}&apos;s Diary
-        </h1>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="flex items-center justify-center rounded-xl" style={{ width: 34, height: 34, background: 'var(--candy-grape)', border: '2px solid var(--ink)', boxShadow: '2px 2px 0 0 var(--ink)', color: '#fff' }}>
+          <BookOpen size={19} />
+        </span>
+        <h1 className="text-2xl">{user.name}&apos;s Diary</h1>
       </div>
 
       {/* Date navigator */}
       <div
-        className="rounded-2xl px-3 py-2 mb-3 flex items-center gap-2"
+        className="sticker pop px-3 py-2 mb-3 flex items-center gap-2"
         style={{
-          background: 'var(--color-card)',
-          boxShadow: isToday ? `0 2px 16px ${accent}40` : '0 2px 12px rgba(0,0,0,0.05)',
-          border: isToday ? `2px solid ${accent}` : '2px solid transparent',
+          ['--i' as string]: 0,
+          background: isToday ? `color-mix(in srgb, ${accent} 14%, var(--color-card))` : 'var(--color-card)',
         }}
       >
         <button
           onClick={() => setDate(shiftDate(activeDate, -1))}
-          className="w-10 h-10 flex items-center justify-center rounded-xl"
-          style={{ background: 'var(--color-surface)' }}
+          className="sticker-press w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0"
+          style={{ background: 'var(--color-surface)', border: '2px solid var(--ink)', boxShadow: '2px 2px 0 0 var(--ink)' }}
           aria-label="Previous day"
         >
-          <ChevronLeft size={18} color="var(--color-muted)" />
+          <ChevronLeft size={18} color="var(--color-text)" />
         </button>
 
         {/* Tapping anywhere on the date opens the calendar. The native date
@@ -141,12 +140,18 @@ function DiaryContent() {
             no browser chevron/indicator shows — the text itself is the trigger. */}
         <div className="flex-1 flex flex-col items-center relative">
           <span
-            className="text-center font-bold"
-            style={{ color: isToday ? accent : isFuture ? 'var(--color-muted)' : 'var(--color-text)' }}
+            className="text-center font-extrabold"
+            style={{ color: isToday ? 'var(--candy-orange-ink)' : isFuture ? 'var(--color-muted)' : 'var(--color-text)' }}
           >
             {dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })}
           </span>
-          <span className="text-[10px] font-bold" style={{ color: 'var(--color-muted)' }}>
+          <span
+            className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full mt-0.5"
+            style={{
+              color: isToday ? '#fff' : 'var(--color-muted)',
+              background: isToday ? 'var(--candy-orange)' : 'var(--color-surface)',
+            }}
+          >
             {isToday ? 'TODAY' : isPast ? 'PAST' : 'COMING UP'}
           </span>
           <input
@@ -163,11 +168,11 @@ function DiaryContent() {
 
         <button
           onClick={() => setDate(shiftDate(activeDate, 1))}
-          className="w-10 h-10 flex items-center justify-center rounded-xl"
-          style={{ background: 'var(--color-surface)' }}
+          className="sticker-press w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0"
+          style={{ background: 'var(--color-surface)', border: '2px solid var(--ink)', boxShadow: '2px 2px 0 0 var(--ink)' }}
           aria-label="Next day"
         >
-          <ChevronRight size={18} color="var(--color-muted)" />
+          <ChevronRight size={18} color="var(--color-text)" />
         </button>
       </div>
 
@@ -175,32 +180,31 @@ function DiaryContent() {
       {!isToday && (
         <button
           onClick={() => setDate(today)}
-          className="w-full mb-3 py-2 rounded-xl text-sm font-bold"
-          style={{ background: accent + '15', color: accent }}
+          className="sticker-sm sticker-press w-full mb-3 py-2 text-sm font-extrabold text-white"
+          style={{ background: 'var(--candy-orange)' }}
         >
-          Jump to today ({today})
+          Jump to today
         </button>
       )}
 
       {/* Nice date heading */}
-      <h2 className="text-lg mb-2" style={{ fontFamily: 'var(--font-fredoka), cursive' }}>
-        {niceDate}
-      </h2>
+      <h2 className="text-lg mb-2 px-1">{niceDate}</h2>
 
       {/* Target line */}
       {target && (
         <div
-          className="rounded-xl p-3 mb-3 flex items-center gap-2 font-bold text-sm"
+          className="sticker-sm pop p-3 mb-3 flex items-center gap-2 font-extrabold text-sm"
           style={{
-            background: hitTarget ? 'var(--success-bg)' : 'var(--color-bg)',
-            color: hitTarget ? 'var(--success-fg)' : '#FF6B35',
+            ['--i' as string]: 1,
+            background: hitTarget ? 'var(--success-bg)' : 'color-mix(in srgb, var(--candy-orange) 12%, var(--color-card))',
+            color: hitTarget ? 'var(--success-fg)' : 'var(--candy-orange-ink)',
           }}
         >
-          <span>{LANGUAGE_FLAGS[target.language]}</span>
+          <span className="text-base">{LANGUAGE_FLAGS[target.language]}</span>
           <span className="flex-1">
             Target: {target.pages} pages of {target.language}
           </span>
-          <span>
+          <span className="px-2 py-0.5 rounded-full" style={{ background: hitTarget ? 'color-mix(in srgb, var(--candy-teal) 22%, transparent)' : 'color-mix(in srgb, var(--candy-orange) 18%, transparent)' }}>
             {totalDelta} / {target.pages}{hitTarget ? ' ✓' : ''}
           </span>
         </div>
@@ -208,8 +212,8 @@ function DiaryContent() {
 
       {/* Log content */}
       <div
-        className="rounded-2xl p-4"
-        style={{ background: 'var(--color-card)', boxShadow: 'var(--color-shadow)' }}
+        className="sticker pop p-4"
+        style={{ ['--i' as string]: 2, background: 'var(--color-card)' }}
       >
         {isFuture ? (
           <FutureDayPreview books={books} logs={logs} date={activeDate} />

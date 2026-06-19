@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Pencil, Trash2, Plus, Check, X, Camera, BookOpen, Search } from 'lucide-react'
+import { Pencil, Trash2, Plus, Check, X, Camera, BookOpen, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Book, ReadingLog, CATEGORIES, CATEGORY_COLORS, LANGUAGES, Category, Language } from '@/lib/types'
 import { useUser } from '@/components/UserContext'
 import ProgressBar from '@/components/ProgressBar'
+import Toast from '@/components/Toast'
 import { getCurrentPage, progressPercent, todayLocal } from '@/lib/utils'
 
 type BookForm = {
@@ -64,11 +65,23 @@ export default function BooksPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // Deferred delete: when a book is removed we hide it immediately and show an
+  // undo toast. The real API DELETE only fires when the toast is dismissed
+  // (no undo). Undo restores the row to its original position with no API call.
+  const [pendingDelete, setPendingDelete] = useState<{ book: Book; index: number } | null>(null)
+  // Tracks the toast-owner's settle so an unmount mid-flight still commits.
+  const pendingRef = useRef<{ book: Book; index: number } | null>(null)
+  pendingRef.current = pendingDelete
+
   // Filters
   const [search, setSearch] = useState('')
   const [genreFilter, setGenreFilter] = useState<Category | 'All'>('All')
   const [pagesFilter, setPagesFilter] = useState<PagesBucket>('Any')
   const [sortBy, setSortBy] = useState<SortKey>('recent')
+
+  // Pagination — show the library in pages of 20 so it never gets unwieldy.
+  const PAGE_SIZE = 20
+  const [page, setPage] = useState(1)
   const filtersActive = search.trim() !== '' || genreFilter !== 'All' || pagesFilter !== 'Any'
   function clearFilters() {
     setSearch('')
@@ -88,6 +101,19 @@ export default function BooksPage() {
   }
 
   useEffect(() => { load() }, [user])
+
+  // If the user leaves the page with a delete still pending, commit it on
+  // unmount so the action isn't silently lost (the toast just never expired).
+  useEffect(() => {
+    return () => { if (pendingRef.current) commitPendingDelete() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Jump back to the first page whenever the result set changes (new search,
+  // genre, length bucket, or sort) so the user isn't stranded on an empty page.
+  useEffect(() => {
+    setPage(1)
+  }, [search, genreFilter, pagesFilter, sortBy])
 
   async function handleAdd() {
     if (!form.title.trim() || !form.total_pages) { setError('Title and page count are required.'); return }
@@ -110,10 +136,47 @@ export default function BooksPage() {
     setSaving(false)
   }
 
-  async function handleDelete(bookId: string) {
-    await fetch(`/api/books/${bookId}`, { method: 'DELETE' })
+  function handleDelete(bookId: string) {
+    const index = books.findIndex((bk) => bk.id === bookId)
+    if (index === -1) return
+    const book = books[index]
+
+    // If another delete is already pending, commit it first so we never lose
+    // a book by stacking deletes.
+    if (pendingRef.current) commitPendingDelete()
+
     setBooks((b) => b.filter((bk) => bk.id !== bookId))
     if (editingId === bookId) setEditingId(null)
+    setPendingDelete({ book, index })
+  }
+
+  // Fire the real API DELETE for the currently pending book and clear it.
+  function commitPendingDelete() {
+    const pending = pendingRef.current
+    if (!pending) return
+    setPendingDelete(null)
+    fetch(`/api/books/${pending.book.id}`, { method: 'DELETE' }).catch(() => {
+      // On failure, put the book back so the user isn't silently misled.
+      setBooks((b) => {
+        if (b.some((bk) => bk.id === pending.book.id)) return b
+        const next = [...b]
+        next.splice(Math.min(pending.index, next.length), 0, pending.book)
+        return next
+      })
+      setError('Could not delete the book. It has been restored.')
+    })
+  }
+
+  function undoPendingDelete() {
+    const pending = pendingRef.current
+    if (!pending) return
+    setBooks((b) => {
+      if (b.some((bk) => bk.id === pending.book.id)) return b
+      const next = [...b]
+      next.splice(Math.min(pending.index, next.length), 0, pending.book)
+      return next
+    })
+    setPendingDelete(null)
   }
 
   function startEdit(book: Book) {
@@ -177,9 +240,16 @@ export default function BooksPage() {
     }
   })
 
+  // Paginate the sorted/filtered list. Clamp the page so it stays valid when
+  // the result set shrinks (filter applied, book deleted, etc.).
+  const totalPages = Math.max(1, Math.ceil(sortedBooks.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pageStart = (safePage - 1) * PAGE_SIZE
+  const pagedBooks = sortedBooks.slice(pageStart, pageStart + PAGE_SIZE)
+
   if (!user || loading) {
     return (
-      <div className="p-4 pt-12">
+      <div className="p-4">
         <div className="skeleton h-8 w-48 mb-4" />
         {[1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton h-14 w-full mb-2 rounded-xl" />)}
       </div>
@@ -187,22 +257,22 @@ export default function BooksPage() {
   }
 
   return (
-    <div className="p-4 pt-12 tab-content">
+    <div className="p-4 tab-content">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl" style={{ fontFamily: 'var(--font-fredoka), cursive' }}>Book Library</h1>
-          <p className="text-xs font-bold" style={{ color: 'var(--color-muted)' }}>{books.length} books · shared collection</p>
+          <h1 className="text-2xl">Book Library</h1>
+          <p className="text-xs font-extrabold" style={{ color: 'var(--color-muted)' }}>{books.length} books · shared collection</p>
         </div>
         <div className="flex gap-2">
           <Link href="/books/add-photo"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold"
-            style={{ background: 'var(--color-bg)', color: '#FF6B35' }}>
+            className="sticker-sm sticker-press flex items-center gap-1.5 px-3 py-2 text-sm font-extrabold"
+            style={{ background: 'var(--candy-sky)', color: '#fff' }}>
             <Camera size={15} /> Scan
           </Link>
           <button onClick={() => { setShowAdd((s) => !s); setError('') }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold text-white"
-            style={{ background: '#FF6B35' }}>
+            className="sticker-sm sticker-press flex items-center gap-1.5 px-3 py-2 text-sm font-extrabold text-white"
+            style={{ background: 'var(--candy-orange)' }}>
             <Plus size={15} /> Add
           </button>
         </div>
@@ -210,8 +280,8 @@ export default function BooksPage() {
 
       {/* Add form */}
       {showAdd && (
-        <div className="rounded-2xl p-4 mb-4" style={{ background: 'var(--color-bg)', border: '2px solid #FFD93D' }}>
-          <h2 className="font-bold mb-3" style={{ fontFamily: 'var(--font-fredoka), cursive' }}>Add a Book</h2>
+        <div className="sticker pop p-4 mb-4" style={{ background: 'color-mix(in srgb, var(--candy-sun) 14%, var(--color-card))' }}>
+          <h2 className="text-lg mb-3">Add a Book</h2>
           <div className="flex flex-col gap-2">
             <input type="text" placeholder="Title *" value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
@@ -237,16 +307,16 @@ export default function BooksPage() {
                 {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
               </select>
             </div>
-            {error && <p className="text-xs font-bold" style={{ color: '#EE4266' }}>{error}</p>}
+            {error && <p className="text-xs font-bold" style={{ color: 'var(--error-fg)' }}>{error}</p>}
             <div className="flex gap-2 mt-1">
               <button onClick={() => { setShowAdd(false); setError('') }}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-sm"
-                style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}>
+                className="sticker-sm sticker-press flex-1 flex items-center justify-center gap-1.5 py-2.5 font-extrabold text-sm"
+                style={{ background: 'var(--color-surface)', color: 'var(--color-text)' }}>
                 <X size={14} /> Cancel
               </button>
               <button onClick={handleAdd} disabled={saving}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-sm text-white"
-                style={{ background: '#FF6B35' }}>
+                className="sticker-sm sticker-press flex-1 flex items-center justify-center gap-1.5 py-2.5 font-extrabold text-sm text-white"
+                style={{ background: 'var(--candy-teal)' }}>
                 <Check size={14} /> {saving ? 'Adding…' : 'Add Book'}
               </button>
             </div>
@@ -320,7 +390,7 @@ export default function BooksPage() {
               <button
                 onClick={clearFilters}
                 className="text-xs font-bold flex items-center gap-1"
-                style={{ color: '#FF6B35' }}
+                style={{ color: 'var(--color-primary)' }}
               >
                 <X size={12} /> Clear filters
               </button>
@@ -329,10 +399,39 @@ export default function BooksPage() {
         </div>
       )}
 
+      {/* Pagination — only when the filtered list spans more than one page */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <button
+            onClick={() => { setPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+            disabled={safePage <= 1}
+            className="sticker-sm sticker-press flex items-center gap-1 px-3 py-2 text-sm font-extrabold disabled:opacity-40"
+            style={{ background: 'var(--color-card)', color: 'var(--color-text)' }}
+            aria-label="Previous page"
+          >
+            <ChevronLeft size={16} /> Prev
+          </button>
+
+          <span className="text-xs font-extrabold" style={{ color: 'var(--color-muted)' }}>
+            Page {safePage} of {totalPages}
+          </span>
+
+          <button
+            onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+            disabled={safePage >= totalPages}
+            className="sticker-sm sticker-press flex items-center gap-1 px-3 py-2 text-sm font-extrabold disabled:opacity-40"
+            style={{ background: 'var(--color-card)', color: 'var(--color-text)' }}
+            aria-label="Next page"
+          >
+            Next <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Flat book list — genre shown as a chip on each row */}
       {sortedBooks.length > 0 && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-card)', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
-          {sortedBooks.map((book, idx) => {
+        <div className="sticker overflow-hidden" style={{ background: 'var(--color-card)' }}>
+          {pagedBooks.map((book, idx) => {
             const cp = getCurrentPage(book.id, logs)
             const pct = progressPercent(cp, book.total_pages)
             const complete = cp >= book.total_pages
@@ -364,7 +463,7 @@ export default function BooksPage() {
                           onClick={() => handleSaveEdit(book.id)}
                           disabled={saving}
                           className="px-3 py-1.5 rounded-lg text-white hover:opacity-90 transition-opacity flex items-center justify-center"
-                          style={{ background: '#FF6B35' }}
+                          style={{ background: 'var(--color-primary)' }}
                           aria-label="Confirm page"
                         >
                           <Check size={16} />
@@ -384,7 +483,7 @@ export default function BooksPage() {
                           className="p-1.5 rounded-lg hover:opacity-70 transition-opacity flex items-center justify-center"
                           aria-label="Edit page"
                         >
-                          <Pencil size={15} color="#FF6B35" />
+                          <Pencil size={15} color="var(--color-primary)" />
                         </button>
                         <button
                           onClick={() => handleDelete(book.id)}
@@ -455,11 +554,20 @@ export default function BooksPage() {
           <button
             onClick={clearFilters}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-sm text-white"
-            style={{ background: '#FF6B35' }}
+            style={{ background: 'var(--color-primary)' }}
           >
             <X size={14} /> Clear filters
           </button>
         </div>
+      )}
+
+      {pendingDelete && (
+        <Toast
+          key={pendingDelete.book.id}
+          message={`Deleted “${pendingDelete.book.title}”`}
+          onUndo={undoPendingDelete}
+          onDismiss={commitPendingDelete}
+        />
       )}
     </div>
   )

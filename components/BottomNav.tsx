@@ -21,23 +21,31 @@ export default function BottomNav() {
       className="fixed bottom-0 left-0 right-0 z-50 max-w-[480px] mx-auto"
       style={{
         background: 'var(--color-card)',
-        borderTop: '1px solid var(--color-surface)',
-        boxShadow: '0 -2px 16px rgba(0,0,0,0.06)',
-        height: 60,
+        borderTop: '2.5px solid var(--ink)',
+        boxShadow: '0 -3px 0 0 color-mix(in srgb, var(--ink) 12%, transparent)',
+        // 64px bar + safe-area padding so tabs clear the iOS home indicator.
+        height: 'calc(64px + env(safe-area-inset-bottom))',
+        paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
-      <div className="flex h-full">
+      <div className="flex items-center px-2" style={{ height: 64 }}>
         {tabs.map(({ href, label, Icon }) => {
           const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
           return (
             <Link
               key={href}
               href={href}
-              className="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px]"
-              style={{ color: active ? '#FF6B35' : 'var(--color-subtle)' }}
+              className="flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1.5 mx-1 rounded-2xl"
+              style={{
+                color: active ? '#fff' : 'var(--color-muted)',
+                background: active ? 'var(--candy-orange)' : 'transparent',
+                border: active ? '2px solid var(--ink)' : '2px solid transparent',
+                boxShadow: active ? '2px 2px 0 0 var(--ink)' : 'none',
+                transition: 'background 0.15s ease, color 0.15s ease',
+              }}
             >
-              <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
-              <span className="text-[10px] font-bold leading-none">{label}</span>
+              <Icon size={20} strokeWidth={active ? 2.6 : 2} />
+              <span className="text-[10px] font-extrabold leading-none">{label}</span>
             </Link>
           )
         })}

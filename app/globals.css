@@ -5,14 +5,22 @@
   --orange: #FF6B35;
   --yellow: #FFD93D;
   --teal: #00C9A7;
+
+  /* Brand colour as a semantic token. Previously the orange literal #FF6B35 was
+     hardcoded across pages/components; reference var(--color-primary) instead so
+     the brand is themeable and can't drift. */
+  --color-primary: #FF6B35;
+  --color-on-primary: #FFFFFF;
   --text: #2D2D2D;
-  --muted: #9A9A9A;
+  --muted: #6B6B6B;
   --card: #FFFFFF;
 
   --color-bg: #FFF8F0;
   --color-card: #FFFFFF;
   --color-surface: #F0E8E0;
-  --color-muted: #9A9A9A;
+  /* Muted text must clear WCAG AA (4.5:1) on the cream bg for the many small
+     xs/[10px] labels. #9A9A9A was ~2.6:1; #6B6B6B is ~5.3:1 on #FFF8F0. */
+  --color-muted: #6B6B6B;
   --color-text: #2D2D2D;
   --color-subtle: #C0B8B0;
   --color-shadow: 0 2px 16px rgba(0,0,0,0.06);
@@ -24,18 +32,42 @@
   --success-fg: #0F766E;   /* teal-700, ~4.5:1 on light surfaces */
   --error-bg: rgba(238, 66, 102, 0.12);
   --error-fg: #C0392B;
+
+  /* ── "Quest Arcade" candy accent palette ───────────────────────────────
+     A multi-accent system so the UI reads as a bright kids' game HUD instead
+     of a single-orange app. Each accent has a deep variant for the sticker
+     border/shadow (the "ink" line) so coloured cards still feel tactile. */
+  --candy-orange: #FF6B35;  --candy-orange-ink: #C73E12;
+  --candy-teal:   #00C9A7;  --candy-teal-ink:   #00866F;
+  --candy-grape:  #8B5CF6;  --candy-grape-ink:  #5B2BC0;
+  --candy-sky:    #3BA9F0;  --candy-sky-ink:    #1B6FB0;
+  --candy-sun:    #FFC93C;  --candy-sun-ink:    #C9920A;
+  --candy-rose:   #FF5D8F;  --candy-rose-ink:   #C72B5D;
+
+  /* Sticker shape language: a solid "ink" outline + a hard offset shadow give
+     surfaces a printed-sticker / toy feel rather than soft floaty cards. */
+  --ink: #1A1A1A;
+  --sticker-radius: 18px;
+  --sticker-border: 3px solid var(--ink);
+  --sticker-shadow: 4px 5px 0 0 var(--ink);
+  --sticker-shadow-sm: 3px 4px 0 0 var(--ink);
+
+  /* Springy easing for the toy-like press/pop motion. */
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 html[data-theme="dark"] {
   --bg: #121212;
   --card: #1E1E1E;
   --text: #EAEAEA;
-  --muted: #8A8A8A;
+  --muted: #9E9E9E;
 
   --color-bg: #121212;
   --color-card: #1E1E1E;
   --color-surface: #2A2A2A;
-  --color-muted: #8A8A8A;
+  /* Lifted from #8A8A8A so muted labels clear ~4.5:1 even on the lighter
+     --color-surface (#2A2A2A), not just on the page bg. */
+  --color-muted: #9E9E9E;
   --color-text: #EAEAEA;
   --color-subtle: #505050;
   --color-shadow: 0 2px 16px rgba(0,0,0,0.3);
@@ -44,10 +76,58 @@ html[data-theme="dark"] {
   --success-fg: #4FD9C4;   /* light teal, legible on #1E1E1E */
   --error-bg: rgba(238, 66, 102, 0.20);
   --error-fg: #FF8FA3;
+
+  /* Dark: keep accents vivid, but the sticker "ink" becomes a soft black so the
+     hard shadow still reads against the dark surface without being harsh. */
+  --candy-orange-ink: #FF9468;
+  --candy-teal-ink:   #4FD9C4;
+  --candy-grape-ink:  #B79CF7;
+  --candy-sky-ink:    #87CBF7;
+  --candy-sun-ink:    #FFE08A;
+  --candy-rose-ink:   #FF9BBA;
+
+  --ink: #000000;
+  --sticker-border: 2.5px solid rgba(255,255,255,0.10);
+  --sticker-shadow: 4px 5px 0 0 rgba(0,0,0,0.55);
+  --sticker-shadow-sm: 3px 3px 0 0 rgba(0,0,0,0.55);
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Kill the 300ms tap delay on touch devices so taps feel native/instant. */
+a, button, input, select, textarea, [role="button"] {
+  touch-action: manipulation;
+}
+
+/* Single source of truth for keyboard focus. Inputs/selects use outline-none in
+   their inline styles; this restores a visible, on-brand ring for keyboard and
+   AT users without showing a ring on mouse/touch clicks. */
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--candy-grape) 75%, transparent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Press feedback for tappable cards/links that have no native pressed state on
+   touch (hover-only styles do nothing on touch). Apply via className. */
+.pressable {
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+.pressable:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* Respect the user's reduced-motion preference: stop looping/decorative motion
+   and shorten transitions. Content stays fully readable without animation. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 html,
@@ -60,14 +140,60 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Playful dot-grid texture behind everything so the bg isn't a flat fill — it
+   reads as "graph-paper / sticker-book". Fixed so it doesn't scroll-jitter. */
 body {
   font-family: var(--font-nunito), 'Nunito', sans-serif;
   font-weight: 600;
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--color-subtle) 55%, transparent) 1.5px,
+    transparent 1.5px
+  );
+  background-size: 22px 22px;
+  background-attachment: fixed;
 }
 
 h1, h2, h3 {
-  font-family: var(--font-fredoka), 'Fredoka', cursive;
-  font-weight: 400;
+  font-family: var(--font-baloo), 'Baloo 2', cursive;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* ── Sticker surface ───────────────────────────────────────────────────────
+   The signature card treatment: bold ink outline + hard offset shadow. Apply
+   `.sticker` to a card/button; `.sticker-press` adds the toy push-down where
+   the element slides into its own shadow on press. */
+.sticker {
+  border: var(--sticker-border);
+  box-shadow: var(--sticker-shadow);
+  border-radius: var(--sticker-radius);
+}
+.sticker-sm {
+  border: var(--sticker-border);
+  box-shadow: var(--sticker-shadow-sm);
+  border-radius: 14px;
+}
+.sticker-press {
+  transition: transform 0.12s var(--spring), box-shadow 0.12s var(--spring);
+}
+.sticker-press:active {
+  transform: translate(3px, 4px);
+  box-shadow: 1px 1px 0 0 var(--ink);
+}
+
+/* Staggered pop-in for a delightful one-shot page load. Children opt in with
+   `.pop` and an inline --i index for the delay. */
+@keyframes popIn {
+  0%   { opacity: 0; transform: translateY(10px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.pop {
+  opacity: 0;
+  animation: popIn 0.42s var(--spring) forwards;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pop { opacity: 1; animation: none; }
 }
 
 /* Progress bar animation */

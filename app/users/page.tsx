@@ -14,6 +14,8 @@ export default function UsersPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState('👦')
+  // Real hex (not a CSS var) — this value is persisted as avatar_color and is
+  // also concatenated with alpha suffixes (e.g. `color + '20'`) for tints.
   const [color, setColor] = useState('#FF6B35')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -106,17 +108,26 @@ export default function UsersPage() {
   return (
     <div className="p-4 tab-content min-h-screen" style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
-      <div className="text-center pt-8 pb-6">
+      <div className="text-center pt-6 pb-6">
         <div className="flex justify-center mb-3">
-          <BookOpen size={48} style={{ color: '#FF6B35' }} />
+          <span
+            className="flex items-center justify-center pop"
+            style={{
+              ['--i' as string]: 0,
+              width: 64, height: 64, borderRadius: 20,
+              background: 'var(--candy-orange)',
+              border: '2.5px solid var(--ink)',
+              boxShadow: '4px 5px 0 0 var(--ink)',
+              color: '#fff',
+            }}
+          >
+            <BookOpen size={34} />
+          </span>
         </div>
-        <h1
-          className="text-3xl"
-          style={{ fontFamily: 'var(--font-fredoka), cursive', color: '#FF6B35' }}
-        >
+        <h1 className="text-3xl" style={{ color: 'var(--candy-orange-ink)' }}>
           ReadQuest
         </h1>
-        <p className="text-sm mt-1 font-bold" style={{ color: 'var(--color-muted)' }}>
+        <p className="text-sm mt-1 font-extrabold" style={{ color: 'var(--color-muted)' }}>
           Who&apos;s reading today?
         </p>
       </div>
@@ -135,8 +146,8 @@ export default function UsersPage() {
                 <div
                   key={u.id}
                   onClick={() => !isEditing && selectUser(u)}
-                  className="rounded-2xl p-4 transition-all"
-                  style={{ background: 'var(--color-card)', boxShadow: 'var(--color-shadow)' }}
+                  className={isEditing ? 'sticker p-4' : 'sticker sticker-press pop p-4 cursor-pointer'}
+                  style={{ background: 'var(--color-card)' }}
                 >
                   {isEditing ? (
                     <div className="flex flex-col gap-3">
@@ -188,15 +199,15 @@ export default function UsersPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => setEditingId(null)}
-                          className="flex-1 py-2 rounded-lg font-bold flex items-center justify-center gap-1"
-                          style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}
+                          className="sticker-sm sticker-press flex-1 py-2 font-extrabold flex items-center justify-center gap-1"
+                          style={{ background: 'var(--color-surface)', color: 'var(--color-text)' }}
                         >
                           <X size={16} /> Cancel
                         </button>
                         <button
                           onClick={() => handleSaveEdit(u.id)}
                           disabled={saving}
-                          className="flex-1 py-2 rounded-lg font-bold text-white flex items-center justify-center gap-1"
+                          className="sticker-sm sticker-press flex-1 py-2 font-extrabold text-white flex items-center justify-center gap-1"
                           style={{ background: editColor }}
                         >
                           <Check size={16} /> Save
@@ -206,15 +217,15 @@ export default function UsersPage() {
                   ) : (
                     <div className="flex items-center gap-4 cursor-pointer">
                       <div
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-bold flex-shrink-0"
-                        style={{ background: u.avatar_color + '20', color: u.avatar_color }}
+                        className="w-14 h-14 flex items-center justify-center text-2xl font-extrabold flex-shrink-0"
+                        style={{ background: u.avatar_color, color: '#fff', borderRadius: 16, border: '2px solid var(--ink)', boxShadow: '2px 2px 0 0 var(--ink)' }}
                       >
                         {getInitials(u.name) || u.avatar_emoji}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div
                           className="text-xl font-bold"
-                          style={{ fontFamily: 'var(--font-fredoka), cursive', color: u.avatar_color }}
+                          style={{ fontFamily: 'var(--font-baloo), cursive', color: u.avatar_color }}
                         >
                           {u.name}
                         </div>
@@ -249,8 +260,13 @@ export default function UsersPage() {
           {!showAdd && (
             <button
               onClick={() => setShowAdd(true)}
-              className="w-full py-4 rounded-2xl font-bold text-lg"
-              style={{ background: 'color-mix(in srgb, #FF6B35 12%, var(--color-card))', color: '#FF6B35', border: '2px dashed #FF6B35' }}
+              className="sticker-press w-full py-4 font-extrabold text-lg"
+              style={{
+                background: 'color-mix(in srgb, var(--candy-orange) 12%, var(--color-card))',
+                color: 'var(--candy-orange-ink)',
+                border: '2.5px dashed var(--candy-orange)',
+                borderRadius: 'var(--sticker-radius)',
+              }}
             >
               + Add Reader
             </button>
@@ -258,16 +274,10 @@ export default function UsersPage() {
 
           {/* Add reader form */}
           {showAdd && (
-            <div
-              className="rounded-2xl p-4"
-              style={{ background: 'var(--color-card)', boxShadow: 'var(--color-shadow)' }}
-            >
+            <div className="sticker pop p-4" style={{ background: 'var(--color-card)' }}>
               <div className="flex items-center gap-2 mb-4">
-                {users.length === 0 && <Hand size={20} style={{ color: '#FF6B35' }} />}
-                <h2
-                  className="text-lg"
-                  style={{ fontFamily: 'var(--font-fredoka), cursive' }}
-                >
+                {users.length === 0 && <Hand size={20} style={{ color: 'var(--candy-orange)' }} />}
+                <h2 className="text-lg">
                   {users.length === 0 ? 'Add your first reader!' : 'Add a reader'}
                 </h2>
               </div>
@@ -329,20 +339,20 @@ export default function UsersPage() {
                 </div>
                 <span
                   className="text-lg font-bold"
-                  style={{ fontFamily: 'var(--font-fredoka), cursive', color }}
+                  style={{ fontFamily: 'var(--font-baloo), cursive', color }}
                 >
                   {name || 'Preview'}
                 </span>
               </div>
 
-              {error && <p className="text-sm font-bold mb-3" style={{ color: '#EE4266' }}>{error}</p>}
+              {error && <p className="text-sm font-bold mb-3" style={{ color: 'var(--error-fg)' }}>{error}</p>}
 
               <div className="flex gap-2">
                 {users.length > 0 && (
                   <button
                     onClick={() => { setShowAdd(false); setError('') }}
-                    className="flex-1 py-3 rounded-xl font-bold"
-                    style={{ background: 'var(--color-surface)', color: 'var(--color-muted)' }}
+                    className="sticker-sm sticker-press flex-1 py-3 font-extrabold"
+                    style={{ background: 'var(--color-surface)', color: 'var(--color-text)' }}
                   >
                     Cancel
                   </button>
@@ -350,8 +360,8 @@ export default function UsersPage() {
                 <button
                   onClick={handleAdd}
                   disabled={saving}
-                  className="flex-1 py-3 rounded-xl font-bold text-white"
-                  style={{ background: color, boxShadow: `0 2px 12px ${color}60` }}
+                  className="sticker-sm sticker-press flex-1 py-3 font-extrabold text-white"
+                  style={{ background: color }}
                 >
                   {saving ? 'Adding...' : `Let's go! ${emoji}`}
                 </button>

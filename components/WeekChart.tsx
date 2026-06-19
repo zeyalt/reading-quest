@@ -9,16 +9,25 @@ interface Props {
   highlightIdx?: number // bar index to highlight orange; -1 = none; defaults to todayDayOfWeek()
 }
 
-const MAX_STEM = 72 // px height of a full-scale stem
-const BUBBLE = 20 // px diameter of the value bubble
-const AREA = 96 // px column height — headroom for a full bar + its bubble cap
+const MAX_STEM = 70 // px height of a full-scale stem
+const BUBBLE = 24 // px diameter of the value bubble
+const AREA = 98 // px column height — headroom for a full bar + its bubble cap
+const STEM_W = 8 // px stem width — thin, so the bubble reads as a lollipop head
 
 export default function WeekChart({ data, labels, highlightIdx }: Props) {
   const todayIdx = todayDayOfWeek()
   const max = Math.max(...data, 1)
 
+  // Text summary so screen readers get the week's gist, not just 7 disjoint bars.
+  const total = data.reduce((s, n) => s + n, 0)
+  const daysRead = data.filter((n) => n > 0).length
+  const summary =
+    total === 0
+      ? 'Pages read this week: none logged yet.'
+      : `Pages read this week: ${total} across ${daysRead} ${daysRead === 1 ? 'day' : 'days'}.`
+
   return (
-    <div className="flex items-end gap-2 w-full">
+    <div className="flex items-end gap-2 w-full" role="group" aria-label={summary}>
       {data.map((pages, i) => {
         const isToday = highlightIdx !== undefined ? i === highlightIdx : i === todayIdx
         const hasData = pages > 0
@@ -29,23 +38,29 @@ export default function WeekChart({ data, labels, highlightIdx }: Props) {
         // as one lollipop. With no reading it rests on the baseline.
         const bubbleBottom = hasData ? Math.max(0, stemPx - 6) : 0
 
-        const stemBg = isToday
-          ? 'linear-gradient(180deg, #FF8A5B 0%, #FF6B35 100%)'
-          : 'linear-gradient(180deg, #33D6BC 0%, #00C9A7 100%)'
+        // Today is orange, other days are teal — each with its own "ink" line
+        // so the stems read as little sticker bars.
+        const fill = isToday ? 'var(--candy-orange)' : 'var(--candy-teal)'
+        const ink = isToday ? 'var(--candy-orange-ink)' : 'var(--candy-teal-ink)'
 
         return (
           <div
             key={i}
             className="flex-1 flex flex-col items-center gap-2"
             role="img"
-            aria-label={`${dayLabel}: ${pages} ${pages === 1 ? 'page' : 'pages'}`}
+            aria-label={`${dayLabel}${isToday ? ' (today)' : ''}: ${pages} ${pages === 1 ? 'page' : 'pages'}`}
           >
             <div className="relative w-full" style={{ height: AREA }}>
-              {/* Stem */}
+              {/* Stem — a thin rounded lollipop stick (the bubble is the head) */}
               {hasData && (
                 <div
                   className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full transition-all duration-500 motion-reduce:transition-none"
-                  style={{ width: 11, height: stemPx, background: stemBg }}
+                  style={{
+                    width: STEM_W,
+                    height: stemPx,
+                    background: fill,
+                    border: `1.5px solid ${ink}`,
+                  }}
                 />
               )}
 
@@ -56,33 +71,27 @@ export default function WeekChart({ data, labels, highlightIdx }: Props) {
                   bottom: bubbleBottom,
                   minWidth: BUBBLE,
                   height: BUBBLE,
-                  paddingInline: 4,
-                  background: isToday ? '#FF6B35' : hasData ? 'var(--color-card)' : 'var(--color-surface)',
-                  border: isToday
-                    ? 'none'
-                    : hasData
-                      ? '2px solid #00C9A7'
-                      : '2px solid transparent',
-                  boxShadow: hasData ? '0 3px 8px rgba(0,0,0,0.10)' : 'none',
+                  paddingInline: 5,
+                  background: hasData ? fill : 'var(--color-surface)',
+                  border: hasData ? `2px solid ${ink}` : '2px solid transparent',
+                  boxShadow: hasData ? `1.5px 2px 0 0 ${ink}` : 'none',
                 }}
               >
                 <span
-                  className="text-[10px] font-bold leading-none"
-                  style={{
-                    color: isToday ? '#FFFFFF' : hasData ? 'var(--color-text)' : 'var(--color-muted)',
-                  }}
+                  className="text-[11px] font-extrabold leading-none"
+                  style={{ color: hasData ? '#FFFFFF' : 'var(--color-muted)' }}
                 >
                   {pages}
                 </span>
               </div>
             </div>
 
-            {/* Day label — a soft chip for today, plain text otherwise */}
+            {/* Day label — a coloured chip for today, plain text otherwise */}
             <span
-              className="text-[10px] font-bold leading-none rounded-full px-2 py-0.5"
+              className="text-[10px] font-extrabold leading-none rounded-full px-2 py-0.5"
               style={{
-                color: isToday ? '#FF6B35' : 'var(--color-muted)',
-                background: isToday ? 'rgba(255,107,53,0.12)' : 'transparent',
+                color: isToday ? '#fff' : 'var(--color-muted)',
+                background: isToday ? 'var(--candy-orange)' : 'transparent',
               }}
             >
               {dayLabel}

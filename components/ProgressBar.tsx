@@ -8,7 +8,7 @@ interface Props {
   height?: number
 }
 
-export default function ProgressBar({ percent, color = '#FF6B35', height = 10 }: Props) {
+export default function ProgressBar({ percent, color = 'var(--color-primary)', height = 10 }: Props) {
   const [width, setWidth] = useState(0)
 
   useEffect(() => {

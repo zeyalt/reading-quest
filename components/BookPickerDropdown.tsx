@@ -80,7 +80,7 @@ export default function BookPickerDropdown({
         aria-expanded={isOpen}
         className="w-full rounded-lg border-2 px-3 py-2 font-bold text-sm outline-none flex items-center justify-between gap-2 cursor-pointer transition-all"
         style={{
-          borderColor: isOpen ? '#FF6B35' : 'var(--color-surface)',
+          borderColor: isOpen ? 'var(--color-primary)' : 'var(--color-surface)',
           background: 'var(--color-card)',
           color: 'var(--color-text)',
           boxShadow: isOpen ? '0 0 0 3px rgba(255, 107, 53, 0.15)' : 'none',
@@ -109,7 +109,7 @@ export default function BookPickerDropdown({
             left: 0,
             right: 0,
             background: 'var(--color-card)',
-            border: '2px solid #FF6B35',
+            border: '2px solid var(--color-primary)',
             borderRadius: 12,
             boxShadow: 'var(--color-shadow), 0 12px 32px rgba(0, 0, 0, 0.1)',
             zIndex: 50,

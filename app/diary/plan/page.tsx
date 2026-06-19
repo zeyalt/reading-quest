@@ -77,7 +77,7 @@ export default function ReadingPlanPage() {
 
   if (!user || loading) {
     return (
-      <div className="p-4 pt-12">
+      <div className="p-4">
         <div className="skeleton h-8 w-48 mb-4" />
         {[1, 2, 3, 4, 5, 6, 7].map((i) => (
           <div key={i} className="skeleton h-14 w-full mb-2 rounded-xl" />
@@ -87,7 +87,7 @@ export default function ReadingPlanPage() {
   }
 
   return (
-    <div className="p-4 pt-12 tab-content">
+    <div className="p-4 tab-content">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <button
@@ -98,8 +98,8 @@ export default function ReadingPlanPage() {
         >
           <ChevronLeft size={18} color="var(--color-muted)" />
         </button>
-        <ClipboardList size={24} style={{ color: '#FF6B35' }} />
-        <h1 className="text-2xl" style={{ fontFamily: 'var(--font-fredoka), cursive' }}>
+        <ClipboardList size={24} style={{ color: 'var(--color-primary)' }} />
+        <h1 className="text-2xl">
           Reading Plan
         </h1>
       </div>
