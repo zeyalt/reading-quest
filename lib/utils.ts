@@ -62,6 +62,13 @@ export function getStreak(logs: ReadingLog[]): number {
   let streak = 0
   const cursor = new Date() // local device time
 
+  // If today hasn't been read yet, don't let it break the streak —
+  // start counting from yesterday so prior days still count.
+  const todayStr = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`
+  if (!readDates.has(todayStr)) {
+    cursor.setDate(cursor.getDate() - 1)
+  }
+
   while (true) {
     const y = cursor.getFullYear()
     const m = String(cursor.getMonth() + 1).padStart(2, '0')
