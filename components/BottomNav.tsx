@@ -2,15 +2,17 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, NotebookPen, BookOpen } from 'lucide-react'
+import { Home, NotebookPen, BookOpen, Gift } from 'lucide-react'
 
-// Three tabs: Home (dashboard), Diary (per-day log), Books (library).
+// Four tabs: Home (dashboard), Diary (per-day log), Books (library),
+// Rewards (points balance, reward shop, history).
 // Schedule + Progress were merged in: Diary handles per-day logging while
 // Home absorbs the streak calendar and milestones formerly on Progress.
 const tabs = [
   { href: '/', label: 'Home', Icon: Home },
   { href: '/diary', label: 'Diary', Icon: NotebookPen },
   { href: '/books', label: 'Books', Icon: BookOpen },
+  { href: '/rewards', label: 'Rewards', Icon: Gift },
 ]
 
 export default function BottomNav() {

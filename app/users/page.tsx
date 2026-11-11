@@ -125,7 +125,7 @@ export default function UsersPage() {
           </span>
         </div>
         <h1 className="text-3xl" style={{ color: 'var(--candy-orange-ink)' }}>
-          ReadQuest
+          ReadingQuest
         </h1>
         <p className="text-sm mt-1 font-extrabold" style={{ color: 'var(--color-muted)' }}>
           Who&apos;s reading today?

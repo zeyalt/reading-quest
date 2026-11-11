@@ -1,10 +1,20 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Plus, Trash2, Check, Loader2 } from 'lucide-react'
-import type { Book, ReadingLog } from '@/lib/types'
+import { Plus, Trash2, Check, Loader2, Lock } from 'lucide-react'
+import type { Book, PointsTransaction, ReadingLog } from '@/lib/types'
 import CategoryIcon from '@/components/CategoryIcon'
 import BookPickerDropdown from '@/components/BookPickerDropdown'
+import PinPad from '@/components/PinPad'
+import Toast from '@/components/Toast'
+
+// Yesterday (YYYY-MM-DD) on the device clock. Logging anything older needs the
+// parent PIN, so back-filled days can't quietly mint streak points.
+function yesterdayLocal(): string {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 interface Props {
   userId: string
@@ -23,6 +33,24 @@ export default function DateLogPanel({ userId, date, books, logs, onChanged }: P
   const [addPage, setAddPage] = useState<string>('')
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string>('')
+  // Past-date gate: once a parent unlocks a date it stays unlocked until the
+  // panel moves to another date. `pending` is the action waiting on the PIN.
+  const needsPin = date < yesterdayLocal()
+  const [unlockedDate, setUnlockedDate] = useState<string | null>(null)
+  const unlocked = unlockedDate === date
+  const [pending, setPending] = useState<(() => void) | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+
+  function guarded(action: () => void) {
+    if (needsPin && !unlocked) setPending(() => action)
+    else action()
+  }
+
+  function celebrate(awarded: PointsTransaction[] | undefined) {
+    if (!awarded?.length) return
+    const total = awarded.reduce((s, t) => s + t.amount, 0)
+    setToast(`+${total} ⭐ ${awarded.map((t) => t.description).join(' · ')}`)
+  }
 
   // ---------------- Build per-book state for this date ------------------
   // For each book we know:
@@ -94,6 +122,7 @@ export default function DateLogPanel({ userId, date, books, logs, onChanged }: P
       setError(e?.error ?? 'Save failed')
       return
     }
+    celebrate((await res.json().catch(() => null))?.awarded)
     onChanged()
   }
 
@@ -112,6 +141,7 @@ export default function DateLogPanel({ userId, date, books, logs, onChanged }: P
       setError(e?.error ?? 'Delete failed')
       return
     }
+    celebrate((await res.json().catch(() => null))?.awarded)
     onChanged()
   }
 
@@ -124,15 +154,22 @@ export default function DateLogPanel({ userId, date, books, logs, onChanged }: P
       setError(`Page must be 0–${book.total_pages}.`)
       return
     }
-    await upsertLog(addBookId, page)
-    setAddBookId('')
-    setAddPage('')
+    guarded(async () => {
+      await upsertLog(addBookId, page)
+      setAddBookId('')
+      setAddPage('')
+    })
   }
 
   // ----------------------------- UI ----------------------------------
 
   return (
     <div className="flex flex-col gap-3">
+      {needsPin && !unlocked && (
+        <p className="flex items-center gap-1.5 text-[11px] font-bold" style={{ color: 'var(--color-muted)' }}>
+          <Lock size={12} /> Changing older days needs a parent PIN.
+        </p>
+      )}
       {existing.length === 0 ? (
         <p className="text-sm" style={{ color: 'var(--color-muted)' }}>
           No reading logged yet for this day.
@@ -144,8 +181,8 @@ export default function DateLogPanel({ userId, date, books, logs, onChanged }: P
               key={row.book.id}
               row={row}
               busy={busy === row.book.id}
-              onSave={(p) => upsertLog(row.book.id, p)}
-              onDelete={() => deleteLog(row.book.id)}
+              onSave={(p) => guarded(() => upsertLog(row.book.id, p))}
+              onDelete={() => guarded(() => deleteLog(row.book.id))}
             />
           ))}
         </div>
@@ -190,6 +227,16 @@ export default function DateLogPanel({ userId, date, books, logs, onChanged }: P
       {error && (
         <p className="text-xs font-bold" style={{ color: '#EE4266' }}>{error}</p>
       )}
+
+      {pending && (
+        <PinPad
+          title="Parent PIN needed"
+          subtitle="Changing a day older than yesterday."
+          onSuccess={() => { setUnlockedDate(date); const a = pending; setPending(null); a() }}
+          onClose={() => setPending(null)}
+        />
+      )}
+      {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
     </div>
   )
 }

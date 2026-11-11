@@ -37,11 +37,17 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const supabase = createServiceClient()
-  const { id, name, avatar_emoji, avatar_color } = await req.json()
+  const { id, ...body } = await req.json()
+
+  // Only touch the fields that were sent.
+  const patch: Record<string, unknown> = {}
+  for (const key of ['name', 'avatar_emoji', 'avatar_color', 'main_language', 'second_language']) {
+    if (key in body) patch[key] = body[key] === '' ? null : body[key]
+  }
 
   const { data: user, error } = await supabase
     .from('users')
-    .update({ name, avatar_emoji, avatar_color })
+    .update(patch)
     .eq('id', id)
     .select()
     .single()

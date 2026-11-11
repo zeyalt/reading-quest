@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BookOpen, ChevronDown, Moon, Sun } from 'lucide-react'
+import { BookOpen, ChevronDown, Moon, Settings, Sun } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useUser } from './UserContext'
 import { useTheme } from './ThemeContext'
@@ -35,7 +35,7 @@ export default function TopBar() {
     >
       <div className="flex items-center justify-between gap-2 px-3" style={{ height: 52 }}>
         {/* Wordmark */}
-        <Link href="/" className="flex items-center gap-1.5 pressable" aria-label="ReadQuest home">
+        <Link href="/" className="flex items-center gap-1.5 pressable" aria-label="ReadingQuest home">
           <span
             className="flex items-center justify-center rounded-xl flex-shrink-0"
             style={{
@@ -49,7 +49,7 @@ export default function TopBar() {
           >
             <BookOpen size={17} />
           </span>
-          <span className="text-lg" style={{ fontFamily: 'var(--font-baloo), cursive' }}>ReadQuest</span>
+          <span className="text-lg" style={{ fontFamily: 'var(--font-baloo), cursive' }}>ReadingQuest</span>
         </Link>
 
         {/* Right control group */}
@@ -71,6 +71,22 @@ export default function TopBar() {
               <ChevronDown size={14} />
             </Link>
           )}
+
+          <Link
+            href="/settings"
+            className="pressable sticker-press flex items-center justify-center rounded-full flex-shrink-0"
+            style={{
+              width: 36,
+              height: 36,
+              background: pathname.startsWith('/settings') ? 'var(--candy-grape)' : 'var(--color-card)',
+              color: pathname.startsWith('/settings') ? '#fff' : 'var(--color-text)',
+              border: '2px solid var(--ink)',
+              boxShadow: '2px 2px 0 0 var(--ink)',
+            }}
+            aria-label="Settings"
+          >
+            <Settings size={17} />
+          </Link>
 
           <button
             onClick={toggleTheme}

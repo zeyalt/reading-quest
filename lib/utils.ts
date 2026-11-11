@@ -57,6 +57,29 @@ export function getReadingDates(logs: ReadingLog[]): Set<string> {
   return dates
 }
 
+// Total pages read per date (YYYY-MM-DD) across all books, using the same
+// forward-progress delta as getPagesReadOnDate / getReadingDates. Dates with a
+// log but no forward progress map to 0.
+export function pagesByDate(logs: ReadingLog[]): Map<string, number> {
+  const byBook = new Map<string, ReadingLog[]>()
+  for (const l of logs) {
+    const arr = byBook.get(l.book_id)
+    if (arr) arr.push(l)
+    else byBook.set(l.book_id, [l])
+  }
+  const totals = new Map<string, number>()
+  for (const bookLogs of byBook.values()) {
+    bookLogs.sort((a, b) => a.date.localeCompare(b.date))
+    let prevPage = 0
+    for (const l of bookLogs) {
+      const delta = Math.max(0, l.current_page - prevPage)
+      totals.set(l.date, (totals.get(l.date) ?? 0) + delta)
+      prevPage = l.current_page
+    }
+  }
+  return totals
+}
+
 export function getStreak(logs: ReadingLog[]): number {
   const readDates = getReadingDates(logs)
   let streak = 0

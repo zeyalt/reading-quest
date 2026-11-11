@@ -25,13 +25,13 @@ const baloo = Baloo_2({
 })
 
 export const metadata: Metadata = {
-  title: 'ReadQuest',
+  title: 'ReadingQuest',
   description: 'Track your reading adventure!',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'ReadQuest',
+    title: 'ReadingQuest',
   },
 }
 

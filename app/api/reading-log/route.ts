@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { todayLocal } from '@/lib/utils'
+import { syncPoints } from '@/lib/points'
+import type { PointsTransaction } from '@/lib/types'
+
+// Award any newly-earned points after a log change. A failure here must not
+// fail the log save itself, so it's logged and swallowed.
+async function awardPoints(
+  supabase: ReturnType<typeof createServiceClient>,
+  userId: string,
+): Promise<PointsTransaction[]> {
+  try {
+    return await syncPoints(supabase, userId)
+  } catch (e) {
+    console.error('syncPoints failed:', e)
+    return []
+  }
+}
 
 export async function GET(req: NextRequest) {
   const supabase = createServiceClient()
@@ -50,7 +66,8 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data, { status: 201 })
+  const awarded = await awardPoints(supabase, user_id)
+  return NextResponse.json({ ...data, awarded }, { status: 201 })
 }
 
 // Delete a single (user, book, date) log entry. Used when correcting
@@ -71,5 +88,8 @@ export async function DELETE(req: NextRequest) {
     .eq('book_id', book_id)
     .eq('date', date)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ success: true })
+  // Removing an entry raises the next day's page delta for that book, which can
+  // turn it into a qualifying streak day — so sync here too.
+  const awarded = await awardPoints(supabase, user_id)
+  return NextResponse.json({ success: true, awarded })
 }

@@ -15,10 +15,8 @@ import { useUser } from '@/components/UserContext'
 import StreakBadge from '@/components/StreakBadge'
 import WeekChart from '@/components/WeekChart'
 import CategoryIcon from '@/components/CategoryIcon'
-import {
-  Trophy, Flag, Star, BarChart2, Flame, Calendar, Sprout, BookOpen, Crown, Layers, Layers3,
-  ChevronRight, ChevronLeft, Award, Medal, Globe2, Target, Gem,
-} from 'lucide-react'
+import FamilyGoalCard from '@/components/FamilyGoalCard'
+import { Trophy, Flag, Star, BarChart2, Flame, ChevronRight, ChevronLeft } from 'lucide-react'
 
 export default function Dashboard() {
   const { user } = useUser()
@@ -27,20 +25,23 @@ export default function Dashboard() {
   const [plan, setPlan] = useState<ReadingPlan[]>([])
   const [loading, setLoading] = useState(true)
   const [calMonthOffset, setCalMonthOffset] = useState(0)
+  const [points, setPoints] = useState<number | null>(null)
 
   const today = todayLocal()
   const todayDow = todayDayOfWeek()
 
   const load = useCallback(async () => {
     if (!user) return
-    const [bRes, lRes, pRes] = await Promise.all([
+    const [bRes, lRes, pRes, ptsRes] = await Promise.all([
       fetch('/api/books'),
       fetch(`/api/reading-log?user_id=${user.id}&limit=500`),
       fetch(`/api/reading-plan?user_id=${user.id}`),
+      fetch(`/api/points?user_id=${user.id}`),
     ])
     setBooks(await bRes.json())
     setLogs(await lRes.json())
     setPlan(await pRes.json())
+    if (ptsRes.ok) setPoints((await ptsRes.json()).balance)
     setLoading(false)
   }, [user])
 
@@ -127,45 +128,6 @@ export default function Dashboard() {
     return { cells, monthLabel: cursor.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) }
   }, [today, logs, calMonthOffset])
 
-  // Largest single-day page total ever (for the "20 pages in a day" milestone).
-  const maxDailyPages = useMemo(() => {
-    const dateSet = new Set<string>(logs.map((l) => l.date))
-    let max = 0
-    for (const date of dateSet) {
-      const total = books.reduce((s, b) => s + getPagesReadOnDate(b.id, date, logs), 0)
-      if (total > max) max = total
-    }
-    return max
-  }, [logs, books])
-
-  // Distinct languages with at least one logged book (for "X languages" milestones).
-  const languagesRead = useMemo(() => {
-    const langs = new Set<string>()
-    for (const log of logs) {
-      const book = books.find((b) => b.id === log.book_id)
-      if (book?.language) langs.add(book.language)
-    }
-    return langs.size
-  }, [logs, books])
-
-  // Milestones, roughly ordered easiest → hardest. The horizontal scroll on
-  // the dashboard naturally surfaces "what comes next" without a tier UI.
-  const milestones = useMemo(() => [
-    { icon: <Sprout size={18} />,   label: 'First page',      achieved: logs.length > 0 },
-    { icon: <Flame size={18} />,    label: '3-day streak',    achieved: streak >= 3 },
-    { icon: <BookOpen size={18} />, label: 'First book',      achieved: booksCompleted >= 1 },
-    { icon: <Star size={18} />,     label: '100 pages',       achieved: totalPages >= 100 },
-    { icon: <Target size={18} />,   label: '20 in a day',     achieved: maxDailyPages >= 20 },
-    { icon: <Flame size={18} />,    label: '7-day streak',    achieved: streak >= 7 },
-    { icon: <Globe2 size={18} />,   label: '2 languages',     achieved: languagesRead >= 2 },
-    { icon: <Trophy size={18} />,   label: '500 pages',       achieved: totalPages >= 500 },
-    { icon: <Layers size={18} />,   label: '3 books',         achieved: booksCompleted >= 3 },
-    { icon: <Medal size={18} />,    label: '1000 pages',      achieved: totalPages >= 1000 },
-    { icon: <Award size={18} />,    label: '14-day streak',   achieved: streak >= 14 },
-    { icon: <Layers3 size={18} />,  label: '5 books',         achieved: booksCompleted >= 5 },
-    { icon: <Crown size={18} />,    label: '30-day streak',   achieved: streak >= 30 },
-    { icon: <Gem size={18} />,      label: 'All books',       achieved: books.length > 0 && booksCompleted === books.length },
-  ], [logs.length, booksCompleted, streak, totalPages, maxDailyPages, languagesRead, books.length])
 
   // ----------------------------- Render ---------------------------------
   if (!user || loading) {
@@ -209,8 +171,19 @@ export default function Dashboard() {
             )}
           </p>
         </div>
-        <div className="relative">
+        <div className="relative flex flex-col items-end gap-1.5">
           <StreakBadge streak={streak} />
+          {points !== null && (
+            <Link
+              href="/rewards"
+              className="pressable flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-sm"
+              style={{ background: 'rgba(255,255,255,0.25)', color: '#FFFFFF' }}
+              aria-label={`${points} points — open rewards`}
+            >
+              <Star size={15} fill="currentColor" />
+              <span>{points}</span>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -245,6 +218,8 @@ export default function Dashboard() {
           </div>
         </Link>
       )}
+
+      <FamilyGoalCard index={2} />
 
       {/* Stats triplet — each a coloured sticker tile */}
       <div className="grid grid-cols-3 gap-3 mb-5">
@@ -406,76 +381,6 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
-
-      {/* Milestones — a sticker sheet. Each earned badge gets its own candy
-          colour (cycled) with a sticker outline; locked ones are faded. */}
-      <div
-        className="sticker pop overflow-hidden"
-        style={{ ['--i' as string]: 7, background: 'var(--color-card)' }}
-      >
-        <div className="flex items-center justify-between px-4 pt-4 mb-3">
-          <div className="flex items-center gap-2">
-            <span className="flex items-center justify-center rounded-xl" style={{ width: 30, height: 30, background: 'color-mix(in srgb, var(--candy-sun) 26%, transparent)', color: 'var(--candy-sun-ink)' }}>
-              <Trophy size={17} />
-            </span>
-            <h2 className="text-lg">Sticker Sheet</h2>
-          </div>
-          <span className="text-xs font-extrabold px-2 py-1 rounded-full" style={{ color: 'var(--candy-grape-ink)', background: 'color-mix(in srgb, var(--candy-grape) 16%, transparent)' }}>
-            {milestones.filter((m) => m.achieved).length} / {milestones.length}
-          </span>
-        </div>
-        <div className="px-4 pb-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
-          {milestones.map((m, idx) => {
-            const candy = MILESTONE_CANDIES[idx % MILESTONE_CANDIES.length]
-            return (
-            <div
-              key={m.label}
-              className="flex flex-col items-center justify-start gap-1.5 px-1.5 pt-2.5 pb-2 rounded-2xl"
-              style={{
-                background: m.achieved ? `color-mix(in srgb, ${candy.c} 16%, var(--color-card))` : 'var(--color-surface)',
-                border: m.achieved ? `2px solid ${candy.ink}` : '2px solid transparent',
-                boxShadow: m.achieved ? `2px 2px 0 0 ${candy.ink}` : 'none',
-                opacity: m.achieved ? 1 : 0.55,
-              }}
-            >
-              <div
-                className="flex items-center justify-center rounded-full flex-shrink-0"
-                style={{
-                  background: m.achieved ? candy.c : 'color-mix(in srgb, var(--color-muted) 22%, transparent)',
-                  color: m.achieved ? '#FFFFFF' : 'var(--color-muted)',
-                  width: 38,
-                  height: 38,
-                  boxShadow: m.achieved ? 'inset 0 -2px 0 rgba(0,0,0,0.15)' : 'none',
-                }}
-              >
-                {m.icon}
-              </div>
-              <span
-                className="text-[10px] font-extrabold text-center leading-tight"
-                style={{
-                  color: m.achieved ? candy.ink : 'var(--color-muted)',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                }}
-              >
-                {m.label}
-              </span>
-            </div>
-          )})}
-        </div>
-      </div>
     </div>
   )
 }
-
-// Candy colour cycle for earned milestone stickers.
-const MILESTONE_CANDIES = [
-  { c: 'var(--candy-orange)', ink: 'var(--candy-orange-ink)' },
-  { c: 'var(--candy-teal)',   ink: 'var(--candy-teal-ink)' },
-  { c: 'var(--candy-grape)',  ink: 'var(--candy-grape-ink)' },
-  { c: 'var(--candy-sky)',    ink: 'var(--candy-sky-ink)' },
-  { c: 'var(--candy-rose)',   ink: 'var(--candy-rose-ink)' },
-  { c: 'var(--candy-sun)',    ink: 'var(--candy-sun-ink)' },
-]

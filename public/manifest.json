@@ -1,6 +1,6 @@
 {
-  "name": "ReadQuest",
-  "short_name": "ReadQuest",
+  "name": "ReadingQuest",
+  "short_name": "ReadingQuest",
   "description": "Track your reading adventure!",
   "start_url": "/",
   "scope": "/",

@@ -3,6 +3,8 @@ export interface User {
   name: string
   avatar_emoji: string
   avatar_color: string
+  main_language: Language | null
+  second_language: Language | null
   created_at: string
 }
 
@@ -33,6 +35,40 @@ export interface ReadingPlan {
   language: Language | null
   target_pages: number
   updated_at: string
+}
+
+// Parent-controlled config. `pin_hash` never leaves the server; clients get
+// `has_pin` instead.
+export interface FamilySettings {
+  has_pin: boolean
+  streak_cap: number | null
+  streak_requires_target: boolean
+  book_points_main: number
+  book_points_second: number
+  family_goal_pages: number
+  family_goal_reward: string | null
+  points_start_date: string // YYYY-MM-DD
+}
+
+export interface Reward {
+  id: string
+  name: string
+  emoji: string
+  cost: number
+  is_active: boolean
+  created_at: string
+}
+
+export type PointsKind = 'streak' | 'book' | 'redeem' | 'adjust'
+
+export interface PointsTransaction {
+  id: string
+  user_id: string
+  amount: number
+  kind: PointsKind
+  description: string
+  ref_key: string | null
+  created_at: string
 }
 
 export type Category =
